@@ -10,6 +10,8 @@
         public string Phone { get; set; }
         public bool isUse { get; set; }
 
+        public string? ImagePassenger { get; set; } = null;
+
         public int RoleId { get; set; }
         public Role Roles { get; set; }
     }

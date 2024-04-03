@@ -61,5 +61,14 @@ namespace BookinKanAPI.Controllers
 
             return Ok(StatusCodes.Status200OK);
         }
+
+        [HttpPost("[action]")]
+        public async Task<IActionResult> updateStatusDriver(int Id, int newStatus)
+        {
+            var result = await _driverService.UpdateStatusDriver(Id, newStatus);
+            if (result != null) return BadRequest();
+
+            return Ok(StatusCodes.Status200OK);
+        }
     }
 }

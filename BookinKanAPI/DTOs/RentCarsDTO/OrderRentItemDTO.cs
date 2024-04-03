@@ -4,7 +4,7 @@ using BookinKanAPI.Models;
 namespace BookinKanAPI.DTOs.RentCarsDTO
 {
 
-    public class OrderRentItemDTO : RegisterDTO
+    public class OrderRentItemDTO : UserRents
     {
         public List<OrderRentItems> orderRentItems { get; set; }
     }
@@ -22,7 +22,6 @@ namespace BookinKanAPI.DTOs.RentCarsDTO
         public  int CarsId { get; set; }
 
         public int? DriverId { get; set; }
-        public DateTime? CreateAt { get; set; }
 
     }
 }

@@ -19,8 +19,6 @@ namespace BookinKanAPI.Models
 
         public int ClassCarsId { get; set; }
         public ClassCars ClassCars { get; set; }
-
-        [JsonIgnore]                                                                              
-        public List<ImageCars> ImageCars { get; set; }
+        public ICollection<ImageCars> ImageCars { get; set; } = new List<ImageCars>();
     }
 } 

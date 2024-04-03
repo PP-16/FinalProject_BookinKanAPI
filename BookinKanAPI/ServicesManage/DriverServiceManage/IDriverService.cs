@@ -12,5 +12,6 @@ namespace BookinKanAPI.ServicesManage.DriverServiceManage
         Task<List<Driver>> SearchCarsDriver(string Name);
         Task<List<Driver>> searchDriverByCharges(int minCharges, int maxCharges);
         Task<string> ChangeIsuse(int Id, bool isuse);
+        Task<string> UpdateStatusDriver(int ID, int newStatus);
     }
 }

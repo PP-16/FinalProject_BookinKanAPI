@@ -24,8 +24,25 @@ namespace BookinKanAPI.Controllers
             return Ok(result);
         }
 
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GetAdmins()
+        {
+            var result = await _service.GetAdmin();
+            return Ok(result);
+        }
+
         [HttpPost("[action]")]
-        public async Task<IActionResult> Register(RegisterDTO request)
+        public async Task<IActionResult> RegisterAdmins(RegisterDTO request)
+        {
+            var user = await _service.RegisterAdmin(request);
+
+            if (user == null) return BadRequest("User already exists or Invalid email format or Password wrong");
+
+            return Ok(user);
+        }
+
+        [HttpPost("[action]")]
+        public async Task<IActionResult> Register([FromForm]RegisterDTO request)
         {
             var user = await _service.Register(request);
 
@@ -106,14 +123,14 @@ namespace BookinKanAPI.Controllers
             return Ok(await _service.getRole());
         }
 
-        [HttpPost("[action]")]
-        public async Task<IActionResult> CheckIsuseRoles(int Id, bool isuse)
-        {
-            var result = await _service.ChangeIsuseRole(Id, isuse);
-            if (result != null) return BadRequest();
+        //[HttpPost("[action]")]
+        //public async Task<IActionResult> CheckIsuseRoles(int Id, bool isuse)
+        //{
+        //    var result = await _service.ChangeIsuseRole(Id, isuse);
+        //    if (result != null) return BadRequest();
 
-            return Ok(StatusCodes.Status200OK);
-        }
+        //    return Ok(StatusCodes.Status200OK);
+        //}
 
     }
 }

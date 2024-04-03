@@ -56,5 +56,11 @@ namespace BookinKanAPI.Controllers
             return Ok(StatusCodes.Status200OK);
         }
 
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GetById(int ID)
+        {
+            return Ok(await _itineraryService.GetByIdAsync(ID));
+        }
+
     }
 }

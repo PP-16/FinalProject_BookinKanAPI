@@ -1,4 +1,5 @@
-﻿using BookinKanAPI.DTOs.BookingCarsDTO;
+﻿using BookinKanAPI.DTOs;
+using BookinKanAPI.DTOs.BookingCarsDTO;
 using BookinKanAPI.Models;
 using BookinKanAPI.ServicesManage.BookingServiceManage;
 using BookinKanAPI.ServicesManage.PaymentServiceManage;
@@ -27,6 +28,23 @@ namespace BookinKanAPI.Controllers
             return Ok(await _bookingService.GetBooking());
         }
 
+
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GetTotalPriceBookings()
+        {
+            return Ok(await _bookingService.GetTotalPricesByDateAtBooking());
+        }
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GetTotalPriceBookingsByMount(int month, int year)
+        {
+            return Ok(await _bookingService.GetTotalPricesByMountAtBooking(month, year));
+        }
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GetTotalPriceBookingsByYear(int year)
+        {
+            return Ok(await _bookingService.GetTotalPricesByYearAtBooking(year));
+        }
+
         [HttpPost("[action]")]
         public async Task<IActionResult> CreateBookings(BookingDTO bookingDTO)
         {
@@ -34,6 +52,14 @@ namespace BookinKanAPI.Controllers
             if (result == null) return BadRequest(result);
             return Ok(result);
         }
+        [HttpPost("[action]")]
+        public async Task<IActionResult> CreateEmployeeBookings(EmployeeBookingDTO bookingDTO)
+        {
+            var result = await _bookingService.CreateBookingByEmpolyee(bookingDTO);
+            if (result == null) return BadRequest(result);
+            return Ok(result);
+        }
+
 
         //[HttpGet("[action]")]
         //public async Task<IActionResult> checkSeat(string seatNumber, DateTime dateAtBooking, int itineraryId)
@@ -66,11 +92,6 @@ namespace BookinKanAPI.Controllers
             return Ok(await _bookingService.GetTop3Itinerary());
         }
 
-        [HttpGet("[action]")]
-        public async Task<IActionResult> getPayment()
-        {
-            return Ok(await _paymentService.GetPayment());
-        }
         [Authorize]
         [HttpGet("[action]")]
         public async Task<IActionResult> getByPassenger()
@@ -101,21 +122,6 @@ namespace BookinKanAPI.Controllers
             return Ok(await _bookingService.GetBookingPayment(ID));
         }
 
-        [HttpPost("[action]")]
-        public async Task<IActionResult> RefundPayment([FromBody] string paymentIntentId)
-        {
-            try
-            {
-                var refund = await _paymentService.RefundPayment(paymentIntentId);
-                // Handle success
-                return Ok(new { Message = "Refund successful" });
-            }
-            catch (Exception ex)
-            {
-                // Handle error
-                return BadRequest(new { Message = ex.Message });
-            }
-        }
 
         [HttpPost("[action]")]
         public async Task<IActionResult> upDateBooking(int ID, DateTime newDate, List<string> newSeatNumbers=null)
@@ -125,5 +131,16 @@ namespace BookinKanAPI.Controllers
             if (update != null) return BadRequest(update);
             return Ok(StatusCodes.Status200OK);
         }
+        [HttpPost("[action]")]
+        public async Task<IActionResult> Checkin(int Id, bool checkin)
+        {
+            var result = await _bookingService.ChangeCheckInStatus(Id, checkin);
+            if (result != null) return BadRequest();
+
+            return Ok(StatusCodes.Status200OK);
+        }
+
+
+
     }
 }

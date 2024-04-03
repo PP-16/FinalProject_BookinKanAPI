@@ -1,4 +1,4 @@
-﻿namespace BookinKanAPI.ServicesManage.CarsServiceManage
+﻿namespace BookinKanAPI.ServicesManage.ImageServiceManage
 {
     public interface IImageCarsService
     {
@@ -7,5 +7,6 @@
         string Validation(IFormFileCollection formFiles);
         Task<List<string>> UploadImages(IFormFileCollection formFiles);
         Task DeleteFileImages(List<string> files);
+        Task<List<string>> UploadImageswithPath(IFormFileCollection formFiles, string uploadPath);
     }
 }

@@ -77,5 +77,19 @@ namespace BookinKanAPI.ServicesManage.DriverServiceManage
             return null;
         }
 
+        public async Task<string> UpdateStatusDriver(int ID,int newStatus)
+        {
+            var driver = await _dataContext.Drivers.FindAsync(ID);
+            if (driver != null)
+            {
+                driver.StatusDriver = newStatus;
+            }
+
+            var result = await _dataContext.SaveChangesAsync();
+            if (result <= 0) return "Can't Update Sattus";
+
+            return null;
+        }
+
     }
 }

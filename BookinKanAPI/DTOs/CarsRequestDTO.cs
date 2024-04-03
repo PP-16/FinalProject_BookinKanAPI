@@ -15,7 +15,8 @@ namespace BookinKanAPI.DTOs
         public  int ClasscarsId { get; set; }
         public int QuantitySeat { get; set; }
         public int PriceSeat { get; set; }
-        public IFormFileCollection? ImageCars { get; set; }
+        public IFormFileCollection? FormFiles { get; set; }
         public bool isUse { get; set; }
     }
+     
 }

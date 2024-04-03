@@ -24,14 +24,6 @@ namespace BookinKanAPI.Controllers
             return Ok(await _orderService.GetOrders());
         }
 
-        //[HttpPost("[action]")]
-        //public async Task<IActionResult> CreateUpdateOrderRent(OrderRentDTO rentDTO)
-        //{
-        //    var result = await _orderService.CreateAndUpdateOrders(rentDTO);
-        //    if (result != null) return BadRequest(result) ;
-
-        //    return Ok(StatusCodes.Status201Created);
-        //}
 
         [HttpGet("[action]")]
         public async Task<IActionResult> GetOrderItem()
@@ -39,23 +31,30 @@ namespace BookinKanAPI.Controllers
             return Ok(await _orderService.GetOrdersItems());
         }
 
-        //[HttpPost("[action]")]
-        //public async Task<IActionResult> CreateUpdateOrderRentItem(OrderRentItemDTO itemDTO)
-        //{
-        //    var result = await _orderService.CreateAndUpdateOrdersItems(itemDTO);
-        //    if (result != null) return BadRequest(result);
+        [HttpGet("[action]")]
+        public IActionResult GetOrderTotalByReturn()
+        {
+            return Ok(_orderService.GetTotalPriceByReturnDate());
+        }
+        [HttpGet("[action]")]
+        public IActionResult GetOrderTotalByMount(int month, int year)
+        {
+            return Ok(_orderService.GetTotalPriceByReturnDateMount(month, year));
+        }
+        [HttpGet("[action]")]
+        public IActionResult GetOrderTotalByYear(int year)
+        {
+            return Ok(_orderService.GetTotalPriceByReturnDateYear(year));
+        }
 
-        //    return Ok(StatusCodes.Status201Created);
-        //}
 
-        //[Authorize]
         [HttpPost("[action]")]
         public async Task<IActionResult> CreateOrders(OrderRentItemDTO request)
         {
             var result = await _orderService.CreateOrderRent(request);
-            if (result != null) return BadRequest(result);
+            if (result == null) return BadRequest();
 
-            return Ok(StatusCodes.Status201Created);
+            return Ok(result);
 
         }
 
@@ -63,6 +62,24 @@ namespace BookinKanAPI.Controllers
         public async Task<IActionResult> GetcarInRented()
         {
             return Ok(await _orderService.GetRentedCarsNow());
+        }
+
+
+        [HttpPost("[action]")]
+        public async Task<IActionResult> UpdateStatus(int ID, Status newStatus)
+        {
+            var result = await _orderService.UpdateStatusOrders(ID, newStatus);
+            if (result != null) return BadRequest(result);
+            return Ok(StatusCodes.Status200OK);
+        }
+
+        [HttpPost("[action]")]
+        public async Task<IActionResult> ConfirmReturn(int Id, bool confirm)
+        {
+            var result = await _orderService.ConfirmReturnStatus(Id, confirm);
+            if (result != null) return BadRequest();
+
+            return Ok(StatusCodes.Status200OK);
         }
     }
 }

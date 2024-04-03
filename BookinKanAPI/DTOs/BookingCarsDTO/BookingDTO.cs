@@ -1,7 +1,10 @@
-﻿using BookinKanAPI.Models;
+﻿using BookinKanAPI.DTOs.AuthenDto;
+using BookinKanAPI.DTOs.RentCarsDTO;
+using BookinKanAPI.Models;
 
 namespace BookinKanAPI.DTOs.BookingCarsDTO
 {
+
     public class BookingDTO
     {
         public int BookingId { get; set; }
@@ -14,6 +17,6 @@ namespace BookinKanAPI.DTOs.BookingCarsDTO
 
         public int ItineraryId { get; set; }
 
-        public DateTime? CreateAt { get; set; }
+        public bool CheckIn { get; set; } = false;
     }
 }

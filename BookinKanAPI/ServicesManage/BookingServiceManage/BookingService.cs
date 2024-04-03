@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using Azure.Core;
 using BookinKanAPI.Data;
 using BookinKanAPI.DTOs.BookingCarsDTO;
 using BookinKanAPI.Models;
 using BookinKanAPI.ServicesManage.PaymentServiceManage;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
@@ -13,14 +15,12 @@ namespace BookinKanAPI.ServicesManage.BookingServiceManage
     {
         private readonly DataContext _dataContext;
         private readonly IMapper _mapper;
-        private readonly IPaymentService _paymentService;
         private readonly IHttpContextAccessor _httpContext;
 
-        public BookingService(DataContext dataContext, IMapper mapper,IPaymentService paymentService, IHttpContextAccessor httpContext)
+        public BookingService(DataContext dataContext, IMapper mapper, IHttpContextAccessor httpContext)
         {
             _dataContext = dataContext;
             _mapper = mapper;
-            _paymentService = paymentService;
             _httpContext = httpContext;
         }
 
@@ -43,31 +43,75 @@ namespace BookinKanAPI.ServicesManage.BookingServiceManage
             mappBooking.CreateAt = DateTime.Now;
 
             await _dataContext.Bookings.AddAsync(mappBooking);
+
          
 
             var result = await _dataContext.SaveChangesAsync();
-            var paymentIntent = await _paymentService.CreateOrUpdatePaymentIntent(mappBooking);
-            var paymentBooking = new PaymentBooking()
-            {
-                CreateAt = DateTime.Now,
-                BookingId = mappBooking.BookingId,
-                // Set other properties as needed
-            };
-            if (!string.IsNullOrEmpty(paymentIntent.Id))
-            {
-                paymentBooking.PaymentIntentId = paymentIntent.Id;
-                paymentBooking.ClientSecret = paymentIntent.ClientSecret;
-            }
-
-            await _dataContext.PaymentBookings.AddAsync(paymentBooking);
-            var paymentBookingResult = await _dataContext.SaveChangesAsync();
-
-            if (paymentBookingResult <= 0) return null;
             if (result <= 0) return null;
 
 
-            return paymentBooking;
+            return mappBooking;
         }
+
+
+        public async Task<Dictionary<DateTime, decimal>> GetTotalPricesByDateAtBooking()
+        {
+            var result = await _dataContext.Bookings
+                .GroupBy(b => b.DateAtBooking.Date)
+                .Select(group => new
+                {
+                    DateAtBooking = group.Key,
+                    TotalPrice = group.Sum(b => b.TotalPrice)
+                })
+                .ToDictionaryAsync(x => x.DateAtBooking, x => (decimal)x.TotalPrice);
+
+            return result;
+        }
+
+        //public async Task<Dictionary<DateTime, decimal>> GetTotalPricesByMountAtBooking(int month)
+        //{
+        //    var result = await _dataContext.Bookings
+        //        .Where(b => b.DateAtBooking.Month == month)
+        //        .GroupBy(b => new DateTime(b.DateAtBooking.Year, b.DateAtBooking.Month, 1))
+        //        .Select(group => new
+        //        {
+        //            DateAtBooking = group.Key,
+        //            TotalPrice = group.Sum(b => b.TotalPrice)
+        //        })
+        //        .ToDictionaryAsync(x => x.DateAtBooking, x => (decimal)x.TotalPrice);
+
+        //    return result;
+        //}
+        public async Task<Dictionary<DateTime, decimal>> GetTotalPricesByMountAtBooking(int month,int year)
+        {
+            var result = await _dataContext.Bookings
+        .Where(b => b.DateAtBooking.Month == month && b.DateAtBooking.Year == year)
+        .GroupBy(b => b.DateAtBooking.Date) // Group by date only
+        .Select(group => new
+        {
+            DateAtBooking = group.Key,
+            TotalPrice = group.Any() ? group.Sum(b => b.TotalPrice) : 0 // Check if group has any elements before summing
+        })
+        .ToDictionaryAsync(x => x.DateAtBooking, x => (decimal)x.TotalPrice);
+
+            return result;
+        }
+
+        public async Task<Dictionary<DateTime, decimal>> GetTotalPricesByYearAtBooking(int year)
+        {
+            var result = await _dataContext.Bookings
+           .Where(b => b.DateAtBooking.Year == year)
+           .GroupBy(b => b.DateAtBooking.Month) // Group by date only
+           .Select(group => new
+           {
+               DateAtBooking = new DateTime(year, group.Key, 1), // Create DateTime object with year and month
+               TotalPrice = group.Any() ? group.Sum(b => b.TotalPrice) : 0 // Check if group has any elements before summing
+           })
+           .ToDictionaryAsync(x => x.DateAtBooking, x => (decimal)x.TotalPrice);
+
+            return result;
+        }
+
 
         public async Task<List<Booking>> GetBooking()
         {
@@ -123,14 +167,15 @@ namespace BookinKanAPI.ServicesManage.BookingServiceManage
         public async Task<List<Itinerary>> GetTop3Itinerary()
         {
             var topUsedItineraries = await _dataContext.Bookings
-
-      .Include(b => b.Itinerary) // ให้ Entity Framework Core ทราบว่าต้องการนำเข้าข้อมูล Itinerary
-      .GroupBy(b => b.Itinerary) // กลุ่ม Bookings ตาม Itinerary
-
-      .OrderByDescending(group => group.Count()) // เรียงลำดับจากมากไปน้อย
-      .Take(3)
-      .Select(group => group.Key) // เลือก Itinerary จากกลุ่ม
-      .ToListAsync();
+     .Include(b => b.Itinerary)
+         .ThenInclude(i => i.Cars) // Include Cars navigation property
+     .Include(b => b.Itinerary)
+         .ThenInclude(i => i.RouteCars) // Include RouteCars navigation property
+     .GroupBy(b => b.Itinerary)
+     .OrderByDescending(group => group.Count())
+     .Take(3)
+     .Select(group => group.Key)
+     .ToListAsync();
             return topUsedItineraries;
         }
 
@@ -210,5 +255,76 @@ namespace BookinKanAPI.ServicesManage.BookingServiceManage
             if (find == null) return "Notfound";
             return find;
         }
+
+
+        public async Task<object> CreateBookingByEmpolyee(EmployeeBookingDTO bookingDTO)
+        {
+           var mappBooking = _mapper.Map<Booking>(bookingDTO);
+
+            var itinerary = await _dataContext.Itineraries.Include(c => c.Cars).FirstOrDefaultAsync(i => i.ItineraryId == bookingDTO.ItineraryId);
+            if (itinerary == null) return null;
+
+            // Check if any of the seats already exists
+            foreach (var seatNumber in bookingDTO.SeatNumbers)
+            {
+                if (await CheckSeat(seatNumber, bookingDTO.DateAtBooking, bookingDTO.ItineraryId))
+                {
+                    return $"Seat {seatNumber} is not empty";
+                }
+            }
+            var findUser = await _dataContext.Passengers.FirstOrDefaultAsync(p => p.Email == bookingDTO.Email);
+            if(findUser == null)
+            {
+                string passwordHash = BCrypt.Net.BCrypt.HashPassword(bookingDTO.Phone);
+                Passenger passenger = new Passenger
+                {
+                    PassengerName = bookingDTO.PassengerName,
+                    IDCardNumber = bookingDTO.IDCardNumber,
+                    Email = bookingDTO.Email,
+                    Phone = bookingDTO.Phone,
+                    Password = passwordHash,
+                    RoleId = 2,
+                    isUse = true,
+
+                };
+                mappBooking.Passenger = passenger;
+                await _dataContext.Passengers.AddAsync(passenger);
+            }
+            else
+            {
+                mappBooking.PassengerId = findUser.PassengerId;
+            }
+
+           
+            mappBooking.CreateAt = DateTime.Now;
+            mappBooking.BookingStatus = Status.Topay;
+            
+
+
+
+            //var passent
+
+            await _dataContext.Bookings.AddAsync(mappBooking);
+
+
+            var result = await _dataContext.SaveChangesAsync();
+            if (result <= 0) return null;
+
+
+            return mappBooking;
+        }
+
+        public async Task<string> ChangeCheckInStatus(int Id, bool checkIn)
+        {
+            var booking = await _dataContext.Bookings.FindAsync(Id);
+            if (booking != null)
+            {
+                booking.CheckIn = checkIn;
+            }
+            var result = await _dataContext.SaveChangesAsync();
+            if (result <= 0) return "Can't Update Sattus";
+            return null;
+        }
+
     }
 }

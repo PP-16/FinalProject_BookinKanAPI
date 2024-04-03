@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Text.RegularExpressions;
 using System.Text;
 using Azure.Core;
+using BookinKanAPI.ServicesManage.ImageServiceManage;
 
 namespace BookinKanAPI.ServicesManage.AuthenServiceManage
 {
@@ -16,12 +17,14 @@ namespace BookinKanAPI.ServicesManage.AuthenServiceManage
         private readonly DataContext _context;
         private readonly IConfiguration _config;
         private readonly IHttpContextAccessor _httpContext;
+        private readonly IImageCarsService _image;
 
-        public AuthenService(DataContext context,IConfiguration config,IHttpContextAccessor httpContext)
+        public AuthenService(DataContext context,IConfiguration config,IHttpContextAccessor httpContext,IImageCarsService image)
         {
             _context = context;
             _config = config;
             _httpContext = httpContext;
+            _image = image;
         }
         private string GetUser() => _httpContext.HttpContext.User.FindFirstValue(ClaimTypes.Email);
         private bool IsValidEmail(string email)
@@ -60,6 +63,7 @@ namespace BookinKanAPI.ServicesManage.AuthenServiceManage
         }
         public async Task<object> Register(RegisterDTO request)
         {
+
             var mail = await _context.Passengers.FirstOrDefaultAsync(m => m.Email == request.Email);
             if (mail != null) { return null; }
 
@@ -77,13 +81,42 @@ namespace BookinKanAPI.ServicesManage.AuthenServiceManage
                 PassengerName = request.PassengerName,
                 Password = passwordHash,
                 Phone = request.Phone,
-                RoleId = 2
+                RoleId = 2,
+                isUse = true
+                
             };
+            if (request.ImagePassenger != null)
+            {
+                (string errorMessage, List<string> imageNames) = await UploadImageAsync(request.ImagePassenger);
+                if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    return errorMessage;
+                }
+                passenger.ImagePassenger = imageNames[0];
+            }
+            
+
 
             await _context.Passengers.AddAsync(passenger);
             var result = await _context.SaveChangesAsync();
             if (result <= 0) { return null; }
             return passenger;
+        }
+
+        public async Task<(string errorMessage, List<string> imageNames)> UploadImageAsync(IFormFileCollection formFiles)
+        {
+            var errorMessege = string.Empty;
+            var ImgName = new List<string>();
+
+            if (_image.IsUpload(formFiles))
+            {
+                errorMessege = _image.Validation(formFiles);
+                if (string.IsNullOrEmpty(errorMessege))
+                {
+                    ImgName = await _image.UploadImageswithPath(formFiles, "userImage");
+                }
+            }
+            return (errorMessege, ImgName);
         }
         public async Task<object> Login(LoginDTO request)
         {
@@ -215,6 +248,43 @@ namespace BookinKanAPI.ServicesManage.AuthenServiceManage
 
         }
 
+
+        public async Task<List<Passenger>> GetAdmin()
+        {
+            var admin = await _context.Passengers.Where(r=>r.RoleId == 1).ToListAsync();
+            if (admin == null) return null;
+            return admin;
+        }
+
+        public async Task<object> RegisterAdmin(RegisterDTO request)
+        {
+            var mail = await _context.Passengers.FirstOrDefaultAsync(m => m.Email == request.Email);
+            if (mail != null) { return null; }
+
+            var name = await _context.Passengers.FirstOrDefaultAsync(n => n.PassengerName == request.PassengerName);
+            if (name != null) { return null; }
+
+            if (!IsValidEmail(request.Email)) { return null; }
+
+            string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+            var passenger = new Passenger()
+            {
+                Email = request.Email,
+                IDCardNumber = request.IDCardNumber,
+                PassengerName = request.PassengerName,
+                Password = passwordHash,
+                Phone = request.Phone,
+                RoleId = 1,
+                isUse = true
+            };
+
+            await _context.Passengers.AddAsync(passenger);
+            var result = await _context.SaveChangesAsync();
+            if (result <= 0) { return null; }
+            return passenger;
+        }
+
         //************************************************RoleManage*****************************************************************************************//
 
 
@@ -227,7 +297,6 @@ namespace BookinKanAPI.ServicesManage.AuthenServiceManage
             {
                 RoleName = rolename,
                 RoleNameTH = rolenameTH,
-                isUse = true
             };
 
             await _context.Roles.AddAsync(newrole);
@@ -241,16 +310,16 @@ namespace BookinKanAPI.ServicesManage.AuthenServiceManage
         {
             return await _context.Roles.OrderByDescending(i => i.RoleId).ToListAsync();
         }
-        public async Task<string> ChangeIsuseRole(int Id, bool isuse)
-        {
-            var checkIsuse = await _context.Roles.FindAsync(Id);
-            if (checkIsuse != null)
-            {
-                checkIsuse.isUse = isuse;
-            }
-            var result = await _context.SaveChangesAsync();
-            if (result <= 0) return "Can't Update Sattus";
-            return null;
-        }
+        //public async Task<string> ChangeIsuseRole(int Id, bool isuse)
+        //{
+        //    var checkIsuse = await _context.Roles.FindAsync(Id);
+        //    if (checkIsuse != null)
+        //    {
+        //        checkIsuse.isUse = isuse;
+        //    }
+        //    var result = await _context.SaveChangesAsync();
+        //    if (result <= 0) return "Can't Update Sattus";
+        //    return null;
+        //}
     }
 }

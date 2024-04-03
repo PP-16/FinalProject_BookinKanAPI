@@ -50,7 +50,7 @@ namespace BookinKanAPI.ServicesManage.ItineraryServiceManage
 
         public async Task<Itinerary> GetByIdAsync(int id)
         {
-            return await _dataContext.Itineraries.FirstOrDefaultAsync(i => i.ItineraryId == id);
+            return await _dataContext.Itineraries.Include(c=>c.Cars).Include(r=>r.RouteCars).FirstOrDefaultAsync(i => i.ItineraryId == id);
         }
 
         public async Task<List<Itinerary>> GetItineraries()
@@ -64,7 +64,7 @@ namespace BookinKanAPI.ServicesManage.ItineraryServiceManage
         }
 
         public async Task<string> ChangeIsuse(int Id, bool isuse)
-        {
+        { 
             var checkIsuse = await _dataContext.Itineraries.FindAsync(Id);
             if (checkIsuse != null)
             {

@@ -1,15 +1,14 @@
-﻿
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 
-namespace BookinKanAPI.ServicesManage.CarsServiceManage
+namespace BookinKanAPI.ServicesManage.ImageServiceManage
 {
-    public class ImageCarsService:IImageCarsService
+    public class ImageCarsService : IImageCarsService
     {
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IConfiguration _configuration;
 
-        public ImageCarsService(IWebHostEnvironment webHostEnvironment,IConfiguration configuration)
+        public ImageCarsService(IWebHostEnvironment webHostEnvironment, IConfiguration configuration)
         {
             _webHostEnvironment = webHostEnvironment;
             _configuration = configuration;
@@ -33,6 +32,28 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
                 string fileName = Guid.NewGuid().ToString() +
                 Path.GetExtension(formFile.FileName);
                 string fullName = Path.Combine(uploadPath, fileName);
+                using (var stream = File.Create(fullName))
+                {
+                    await formFile.CopyToAsync(stream);
+                }
+                listFileName.Add(fileName);
+            }
+            return listFileName;
+        }
+
+        public async Task<List<string>> UploadImageswithPath(IFormFileCollection formFiles, string uploadPath)
+        {
+            var listFileName = new List<string>();
+
+            string wwwRootPath = _webHostEnvironment.WebRootPath;
+            var path = Path.Combine(wwwRootPath, uploadPath);
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+
+            foreach (var formFile in formFiles)
+            {
+                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(formFile.FileName);
+                string fullName = Path.Combine(path, fileName);
                 using (var stream = File.Create(fullName))
                 {
                     await formFile.CopyToAsync(stream);
@@ -79,12 +100,14 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
             {
                 var file = Path.Combine("images", item);
                 var oldImagePath = Path.Combine(wwwRootPath, file);
-                if (System.IO.File.Exists(oldImagePath))
+                if (File.Exists(oldImagePath))
                 {
-                    System.IO.File.Delete(oldImagePath);
+                    File.Delete(oldImagePath);
                 }
             }
             return Task.CompletedTask;
         }
+
+     
     }
 }

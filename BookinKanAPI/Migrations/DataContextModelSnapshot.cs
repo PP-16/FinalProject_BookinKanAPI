@@ -33,6 +33,9 @@ namespace BookinKanAPI.Migrations
                     b.Property<int>("BookingStatus")
                         .HasColumnType("int");
 
+                    b.Property<bool>("CheckIn")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime?>("CreateAt")
                         .HasColumnType("datetime2");
 
@@ -125,9 +128,6 @@ namespace BookinKanAPI.Migrations
                     b.Property<int>("Price")
                         .HasColumnType("int");
 
-                    b.Property<bool>("isUse")
-                        .HasColumnType("bit");
-
                     b.HasKey("ClassCarsId");
 
                     b.ToTable("ClassCars");
@@ -176,7 +176,7 @@ namespace BookinKanAPI.Migrations
                             DriverId = 101,
                             Address = "null",
                             Charges = 0.0,
-                            DriverName = "null",
+                            DriverName = "ไม่มีการเลือก",
                             IDCardNumber = "null",
                             Phone = "null",
                             StatusDriver = 0,
@@ -204,6 +204,50 @@ namespace BookinKanAPI.Migrations
                     b.HasIndex("CarsId");
 
                     b.ToTable("ImageCars");
+                });
+
+            modelBuilder.Entity("BookinKanAPI.Models.ImageNews", b =>
+                {
+                    b.Property<int>("ImageNewsId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ImageNewsId"));
+
+                    b.Property<string>("Images")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("NewsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ImageNewsId");
+
+                    b.HasIndex("NewsId");
+
+                    b.ToTable("ImageNews");
+                });
+
+            modelBuilder.Entity("BookinKanAPI.Models.ImageSlide", b =>
+                {
+                    b.Property<int>("ImageSlideId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ImageSlideId"));
+
+                    b.Property<string>("ImageSlides")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SystemSettingId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ImageSlideId");
+
+                    b.HasIndex("SystemSettingId");
+
+                    b.ToTable("ImageSlides");
                 });
 
             modelBuilder.Entity("BookinKanAPI.Models.Itinerary", b =>
@@ -238,6 +282,27 @@ namespace BookinKanAPI.Migrations
                     b.ToTable("Itineraries");
                 });
 
+            modelBuilder.Entity("BookinKanAPI.Models.News", b =>
+                {
+                    b.Property<int>("NewsId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NewsId"));
+
+                    b.Property<string>("NewsDetails")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NewsName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("NewsId");
+
+                    b.ToTable("News");
+                });
+
             modelBuilder.Entity("BookinKanAPI.Models.OrderRent", b =>
                 {
                     b.Property<int>("OrderRentId")
@@ -245,6 +310,9 @@ namespace BookinKanAPI.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderRentId"));
+
+                    b.Property<bool>("ConfirmReturn")
+                        .HasColumnType("bit");
 
                     b.Property<int>("OrderSatus")
                         .HasColumnType("int");
@@ -329,6 +397,9 @@ namespace BookinKanAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImagePassenger")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PassengerName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -360,7 +431,7 @@ namespace BookinKanAPI.Migrations
                             Email = "Admin@g.com",
                             IDCardNumber = "123456789",
                             PassengerName = "Admin",
-                            Password = "$2a$11$wzutS.5ZJ/hdBwfAMz2cg.KkcEFz.ZT4c1plGet5qEGFy8cIFN2IS",
+                            Password = "$2a$11$MgfUYbXM4jQ0UlwRlQYs5OyA7MvECvizjLFfZBXXQQhF5nMhH9bJm",
                             Phone = "0912345678",
                             RoleId = 1,
                             isUse = false
@@ -378,11 +449,20 @@ namespace BookinKanAPI.Migrations
                     b.Property<int?>("BookingId")
                         .HasColumnType("int");
 
+                    b.Property<int>("CategoryPayment")
+                        .HasColumnType("int");
+
                     b.Property<string>("ClientSecret")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CreateAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("ImagePayment")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("OrderRentId")
+                        .HasColumnType("int");
 
                     b.Property<string>("PaymentIntentId")
                         .HasColumnType("nvarchar(max)");
@@ -393,6 +473,8 @@ namespace BookinKanAPI.Migrations
                     b.HasKey("PaymentBookingId");
 
                     b.HasIndex("BookingId");
+
+                    b.HasIndex("OrderRentId");
 
                     b.ToTable("PaymentBookings");
                 });
@@ -413,9 +495,6 @@ namespace BookinKanAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("isUse")
-                        .HasColumnType("bit");
-
                     b.HasKey("RoleId");
 
                     b.ToTable("Roles");
@@ -425,15 +504,13 @@ namespace BookinKanAPI.Migrations
                         {
                             RoleId = 1,
                             RoleName = "Admin",
-                            RoleNameTH = "ผู้ดูแลระบบ",
-                            isUse = false
+                            RoleNameTH = "ผู้ดูแลระบบ"
                         },
                         new
                         {
                             RoleId = 2,
                             RoleName = "Passenger",
-                            RoleNameTH = "ผู้ใช้",
-                            isUse = false
+                            RoleNameTH = "ผู้ใช้"
                         });
                 });
 
@@ -459,6 +536,49 @@ namespace BookinKanAPI.Migrations
                     b.HasKey("RouteCarsId");
 
                     b.ToTable("RouteCars");
+                });
+
+            modelBuilder.Entity("BookinKanAPI.Models.SystemSetting", b =>
+                {
+                    b.Property<int>("SystemSettingId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SystemSettingId"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContactFB")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContactIG")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContactLine")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImagePrompay")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Logo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NameWeb")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("SystemSettingId");
+
+                    b.ToTable("SystemSettings");
                 });
 
             modelBuilder.Entity("BookinKanAPI.Models.Booking", b =>
@@ -500,6 +620,28 @@ namespace BookinKanAPI.Migrations
                         .IsRequired();
 
                     b.Navigation("Cars");
+                });
+
+            modelBuilder.Entity("BookinKanAPI.Models.ImageNews", b =>
+                {
+                    b.HasOne("BookinKanAPI.Models.News", "News")
+                        .WithMany("ImageNews")
+                        .HasForeignKey("NewsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("News");
+                });
+
+            modelBuilder.Entity("BookinKanAPI.Models.ImageSlide", b =>
+                {
+                    b.HasOne("BookinKanAPI.Models.SystemSetting", "SystemSetting")
+                        .WithMany("ImageSlide")
+                        .HasForeignKey("SystemSettingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SystemSetting");
                 });
 
             modelBuilder.Entity("BookinKanAPI.Models.Itinerary", b =>
@@ -574,7 +716,13 @@ namespace BookinKanAPI.Migrations
                         .WithMany()
                         .HasForeignKey("BookingId");
 
+                    b.HasOne("BookinKanAPI.Models.OrderRent", "OrderRent")
+                        .WithMany()
+                        .HasForeignKey("OrderRentId");
+
                     b.Navigation("Booking");
+
+                    b.Navigation("OrderRent");
                 });
 
             modelBuilder.Entity("BookinKanAPI.Models.Cars", b =>
@@ -582,9 +730,19 @@ namespace BookinKanAPI.Migrations
                     b.Navigation("ImageCars");
                 });
 
+            modelBuilder.Entity("BookinKanAPI.Models.News", b =>
+                {
+                    b.Navigation("ImageNews");
+                });
+
             modelBuilder.Entity("BookinKanAPI.Models.OrderRent", b =>
                 {
                     b.Navigation("OrderRentItems");
+                });
+
+            modelBuilder.Entity("BookinKanAPI.Models.SystemSetting", b =>
+                {
+                    b.Navigation("ImageSlide");
                 });
 #pragma warning restore 612, 618
         }

@@ -23,5 +23,7 @@ namespace BookinKanAPI.Models
         public int ItineraryId { get; set; }
         public Itinerary Itinerary { get; set; }
         public DateTime? CreateAt { get; set; }
+
+        public bool CheckIn { get; set; }
     }
 }

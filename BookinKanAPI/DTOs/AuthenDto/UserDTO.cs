@@ -9,7 +9,7 @@
         public string Password { get; set; }
         public string Phone { get; set; }
         public int RoleId { get; set; }
-
+        public IFormFileCollection? ImagePassenger { get; set; }
         public string Token { get; set; }
         public bool isUse { get; set; }
     }

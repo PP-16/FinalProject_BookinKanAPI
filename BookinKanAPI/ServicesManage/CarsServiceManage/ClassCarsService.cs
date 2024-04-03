@@ -58,16 +58,16 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
             return await _dataContext.ClassCars.Where(n => n.ClassName.Contains(classCar)).ToListAsync();
 
         }
-        public async Task<string> ChangeIsuse(int Id, bool isuse)
-        {
-            var checkIsuse = await _dataContext.ClassCars.FindAsync(Id);
-            if (checkIsuse != null)
-            {
-                checkIsuse.isUse = isuse;
-            }
-            var result = await _dataContext.SaveChangesAsync();
-            if (result <= 0) return "Can't Update Sattus";
-            return null;
-        }
+        //public async Task<string> ChangeIsuse(int Id, bool isuse)
+        //{
+        //    var checkIsuse = await _dataContext.ClassCars.FindAsync(Id);
+        //    if (checkIsuse != null)
+        //    {
+        //        checkIsuse.isUse = isuse;
+        //    }
+        //    var result = await _dataContext.SaveChangesAsync();
+        //    if (result <= 0) return "Can't Update Sattus";
+        //    return null;
+        //}
     }
 }

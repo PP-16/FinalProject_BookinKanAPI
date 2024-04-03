@@ -5,6 +5,8 @@ using BookinKanAPI.DTOs.RentCarsDTO;
 using BookinKanAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace BookinKanAPI.ServicesManage.OrderServiceManage
 {
@@ -40,7 +42,7 @@ namespace BookinKanAPI.ServicesManage.OrderServiceManage
         //    var result = await _dataContext.SaveChangesAsync();
         //    if (result <= 0) return "can't Save DB";
         //    return null;
-            
+
         //}
 
         //public async Task<string> CreateAndUpdateOrdersItems(OrderRentItemDTO rentItemDTO)
@@ -51,7 +53,7 @@ namespace BookinKanAPI.ServicesManage.OrderServiceManage
         //        .Include(o => o.OrderRent)
         //        .FirstOrDefaultAsync(i => i.OrderRentItemId == rentItemDTO.OrderRentItemId);
         //    var mappItem = _mapper.Map<OrderRentItem>(rentItemDTO);
-            
+
 
         //    if(checkItem == null)
         //    {
@@ -81,56 +83,49 @@ namespace BookinKanAPI.ServicesManage.OrderServiceManage
         //    return null;
         //}
 
-        public async Task<string> CreateOrderRent(OrderRentItemDTO request)
+        public async Task<object> CreateOrderRent(OrderRentItemDTO request)
         {
-           // var user = await _dataContext.Passengers.FirstOrDefaultAsync(e => e.Email == GetUser());
+            // var user = await _dataContext.Passengers.FirstOrDefaultAsync(e => e.Email == GetUser());
 
-            var order = await _dataContext.OrderRents.Include(x=>x.OrderRentItems).FirstOrDefaultAsync(x => x.OrderRentId == 1);
+            var order = await _dataContext.OrderRents.Include(x => x.OrderRentItems).FirstOrDefaultAsync(x => x.OrderRentId == 1);
 
-            //var mail = await _dataContext.Passengers.FirstOrDefaultAsync(m => m.Email == request.Email);
-            //if (mail != null) { return "have this user"; }
-
-            string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Phone);
-
-            Passenger passenger = new Passenger
-            {
-                PassengerName = request.PassengerName,
-                IDCardNumber = request.IDCardNumber,
-                Email = request.Email,
-                Phone = request.Phone, 
-                Password = passwordHash,
-                RoleId = 2,
-                isUse = true,
-                
-            };
-            await _dataContext.Passengers.AddAsync(passenger);
-            // สร้าง OrderRent จาก OrderRentDTO
-            OrderRent orderRent = new OrderRent
+            var user = await _dataContext.Passengers.FirstOrDefaultAsync(m => m.Email == request.Email);
+            OrderRent orderRent = new OrderRent // สร้าง OrderRent จาก OrderRentDTO ที่เป็นส่วนร่วมของทั้งสองเงื่อนไข
             {
                 OrderSatus = 0,
                 PaymentDate = DateTime.Now,
-                Passenger = passenger,
+                ConfirmReturn = false
             };
 
-           
+            if (user != null)
+            {
+                orderRent.PassengerId = user.PassengerId; // เพิ่ม PassengerId ในกรณีที่ไม่มีข้อมูล email
 
-            
+            }
+            else
+            {
+                string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Phone);
+
+                Passenger passenger = new Passenger
+                {
+                    PassengerName = request.PassengerName,
+                    IDCardNumber = request.IDCardNumber,
+                    Email = request.Email,
+                    Phone = request.Phone,
+                    Password = passwordHash,
+                    RoleId = 2,
+                    isUse = true,
+                };
+
+                await _dataContext.Passengers.AddAsync(passenger);
+                orderRent.Passenger = passenger; // เพิ่ม Passenger ในกรณีที่มีข้อมูล email
+            }
+
             // สร้าง OrderRentItems จาก OrderRentItemDTOs
             foreach (var orderRentItemDTO in request.orderRentItems)
             {
-                
-                var car = await _dataContext.Cars.FindAsync(orderRentItemDTO.CarsId);
 
-                if (car != null && car.ClassCars != null && car.ClassCars.ClassName == "M")
-                {
-                    // Set DriverId only if the car has ClassName 'M'
-                    orderRentItemDTO.DriverId = orderRentItemDTO.DriverId;
-                }
-                else
-                {
-                    // Set DriverId to null if the car does not have ClassName 'M'
-                    orderRentItemDTO.DriverId = 101;
-                }
+                var car = await _dataContext.Cars.FindAsync(orderRentItemDTO.CarsId);
 
                 OrderRentItem orderRentItem = new OrderRentItem
                 {
@@ -141,26 +136,39 @@ namespace BookinKanAPI.ServicesManage.OrderServiceManage
                     PlacePickup = orderRentItemDTO.PlacePickup,
                     PlaceReturn = orderRentItemDTO.PlaceReturn,
                     CarsId = orderRentItemDTO.CarsId,
-                    DriverId = orderRentItemDTO.DriverId , // Set based on the condition above
+                    DriverId = orderRentItemDTO.DriverId, // Set based on the condition above
                     OrderRent = orderRent,
                     CreateAt = DateTime.Now
                 };
                 orderRent.OrderRentItems.Add(orderRentItem);
-                // บันทึก OrderRent ลงฐานข้อมูล
-                await _dataContext.OrderRents.AddAsync(orderRent);
-                //order.OrderRentItems.Add(orderRentItem);
-                // บันทึก OrderRentItem ลงฐานข้อมูล
+
                 await _dataContext.OrderRentItems.AddAsync(orderRentItem);
             }
 
+            await _dataContext.OrderRents.AddAsync(orderRent);
+
             var result = await _dataContext.SaveChangesAsync();
             if (result <= 0) return "Can't save DB";
-            return null;
+
+            var options = new JsonSerializerOptions
+            {
+                ReferenceHandler = ReferenceHandler.Preserve
+            };
+
+            // Serialize the object with options to handle cyclic references
+            var json = JsonSerializer.Serialize(orderRent, options);
+            return orderRent;
         }
 
         public async Task<List<OrderRent>> GetOrders()
         {
-            return await _dataContext.OrderRents.Include(u=>u.Passenger).OrderByDescending(i => i.OrderRentId).ToListAsync();
+            return await _dataContext.OrderRents
+        .Include(u => u.Passenger)
+        .Include(o => o.OrderRentItems).ThenInclude(d => d.Driver)
+        .Include(o => o.OrderRentItems).ThenInclude(d => d.Cars).ThenInclude(c=>c.ClassCars)
+        .Include(o => o.OrderRentItems).ThenInclude(d => d.Cars).ThenInclude(c => c.ImageCars)
+        .OrderByDescending(i => i.OrderRentId)
+        .ToListAsync();
         }
 
         public async Task<List<OrderRentItem>> GetOrdersItems()
@@ -185,5 +193,118 @@ namespace BookinKanAPI.ServicesManage.OrderServiceManage
 
             return rentedCars;
         }
+        public async Task<string> UpdateStatusOrders(int ID, Status newStatus)
+        {
+            var order = await _dataContext.OrderRents.FindAsync(ID);
+
+            if (order != null)
+            {
+                order.OrderSatus = newStatus;
+
+            }
+
+            var result = await _dataContext.SaveChangesAsync();
+            if (result <= 0) return "Can't Update Sattus";
+
+            return null;
+
+        }
+        public async Task<string> ConfirmReturnStatus(int Id, bool confirm)
+        {
+            var order = await _dataContext.OrderRents.FindAsync(Id);
+            if (order != null)
+            {
+                order.ConfirmReturn = confirm;
+            }
+            var result = await _dataContext.SaveChangesAsync();
+            if (result <= 0) return "Can't Update Sattus";
+            return null;
+        }
+
+        public Dictionary<DateTime, long> GetTotalPriceByReturnDate()
+        {
+            Dictionary<DateTime, long> totalPriceByDate = new Dictionary<DateTime, long>();
+
+            var orderItems = _dataContext.OrderRentItems; // Assuming _dataContext is the DataContext of your database
+
+            foreach (var item in orderItems)
+            {
+                DateTime returnDate = item.DateTimeReturn.Date; // Extracting date part only
+                long total = item.Quantity * item.CarsPrice;
+
+                if (totalPriceByDate.ContainsKey(returnDate))
+                {
+                    totalPriceByDate[returnDate] += total; // Add to existing total if date already exists
+                }
+                else
+                {
+                    totalPriceByDate[returnDate] = total; // Create new entry if date doesn't exist
+                }
+            }
+
+            return totalPriceByDate;
+        }
+
+        public Dictionary<DateTime, long> GetTotalPriceByReturnDateMount(int month,int year)
+        {
+            Dictionary<DateTime, long> totalPriceByDate = new Dictionary<DateTime, long>();
+
+            var orderItems = _dataContext.OrderRentItems; // Assuming _dataContext is the DataContext of your database
+
+            foreach (var item in orderItems)
+            {
+                DateTime returnDate = item.DateTimeReturn.Date; // Extracting date part only
+
+                // Check if the month of the return date matches the specified month
+                if (returnDate.Month == month&& returnDate.Year == year)
+                {
+                    long total = item.Quantity * item.CarsPrice;
+
+                    if (totalPriceByDate.ContainsKey(returnDate))
+                    {
+                        totalPriceByDate[returnDate] += total; // Add to existing total if date already exists
+                    }
+                    else
+                    {
+                        totalPriceByDate[returnDate] = total; // Create new entry if date doesn't exist
+                    }
+                }
+            }
+
+            return totalPriceByDate;
+        }
+        public Dictionary<DateTime, long> GetTotalPriceByReturnDateYear(int year)
+        {
+            Dictionary<DateTime, long> totalPriceByDate = new Dictionary<DateTime, long>();
+
+            var orderItems = _dataContext.OrderRentItems; // Assuming _dataContext is the DataContext of your database
+
+            foreach (var item in orderItems)
+            {
+                DateTime returnDate = item.DateTimeReturn.Date; // Extracting date part only
+
+                // Check if the year of the return date matches the specified year
+                if (returnDate.Year == year)
+                {
+                    // Group by month
+                    DateTime keyDate = new DateTime(returnDate.Year, returnDate.Month, 1);
+
+                    long total = item.Quantity * item.CarsPrice;
+
+                    if (totalPriceByDate.ContainsKey(keyDate))
+                    {
+                        totalPriceByDate[keyDate] += total; // Add to existing total if date already exists
+                    }
+                    else
+                    {
+                        totalPriceByDate[keyDate] = total; // Create new entry if date doesn't exist
+                    }
+                }
+            }
+
+            return totalPriceByDate;
+
+        }
+
     }
 }

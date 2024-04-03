@@ -50,14 +50,14 @@ namespace BookinKanAPI.Controllers
             return Ok(await _classCarsService.SearchClass(Classname));
         }
 
-        [HttpPost("[action]")]
-        public async Task<IActionResult> CheckIsuseClass(int Id, bool isuse)
-        {
-            var result = await _classCarsService.ChangeIsuse(Id, isuse);
-            if (result != null) return BadRequest();
+        //[HttpPost("[action]")]
+        //public async Task<IActionResult> CheckIsuseClass(int Id, bool isuse)
+        //{
+        //    var result = await _classCarsService.ChangeIsuse(Id, isuse);
+        //    if (result != null) return BadRequest();
 
-            return Ok(StatusCodes.Status200OK);
-        }
+        //    return Ok(StatusCodes.Status200OK);
+        //}
 
 
         ///-----------------------------CarsManage-----------------------------///

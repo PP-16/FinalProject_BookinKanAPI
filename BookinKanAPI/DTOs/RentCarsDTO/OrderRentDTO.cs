@@ -9,5 +9,6 @@ namespace BookinKanAPI.DTOs.RentCarsDTO
         public  Status OrderSatus { get; set; } = 0;
         public  DateTime PaymentDate { get; set; }
         public int PassengerId { get; set; }
+        public bool ConfirmReturn { get; set; } = false;
     }
 }

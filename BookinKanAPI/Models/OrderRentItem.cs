@@ -1,4 +1,6 @@
-﻿namespace BookinKanAPI.Models
+﻿using System.Text.Json.Serialization;
+
+namespace BookinKanAPI.Models
 {
     public class OrderRentItem
     {
@@ -17,6 +19,7 @@
         public Driver Driver { get; set; }
 
         public int OrderRentId { get; set; }
+        [JsonIgnore]
         public OrderRent OrderRent { get; set; }
         public DateTime? CreateAt { get; set; }
     }

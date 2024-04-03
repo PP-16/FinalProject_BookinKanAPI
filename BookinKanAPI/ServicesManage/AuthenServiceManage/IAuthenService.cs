@@ -19,7 +19,9 @@ namespace BookinKanAPI.ServicesManage.AuthenServiceManage
         Task<object> createRole(string rolename, string rolenameTH);
         Task<object> getRole();
         Task<string> ChangeIsuse(int Id, bool isuse);
-        Task<string> ChangeIsuseRole(int Id, bool isuse);
+        //Task<string> ChangeIsuseRole(int Id, bool isuse);
         Task<object> ChangeRole(int PassId, int RoleId);
+        Task<List<Passenger>> GetAdmin();
+        Task<object> RegisterAdmin(RegisterDTO request);
     }
 }

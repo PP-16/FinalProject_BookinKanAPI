@@ -20,5 +20,10 @@ namespace BookinKanAPI.ServicesManage.BookingServiceManage
         Task<List<Booking>> GetBookingsByUser();
         Task<object> GetBookingPayment(int bookingId);
         Task<string> UpdateDateBooking(int ID, DateTime newDate, List<string> newSeatNumbers = null);
+        Task<object> CreateBookingByEmpolyee(EmployeeBookingDTO bookingDTO);
+        Task<string> ChangeCheckInStatus(int Id, bool checkIn);
+        Task<Dictionary<DateTime, decimal>> GetTotalPricesByDateAtBooking();
+        Task<Dictionary<DateTime, decimal>> GetTotalPricesByMountAtBooking(int month, int year);
+        Task<Dictionary<DateTime, decimal>> GetTotalPricesByYearAtBooking(int year);
     }
 }

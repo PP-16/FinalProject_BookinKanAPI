@@ -1,4 +1,5 @@
-﻿using BookinKanAPI.DTOs.BookingCarsDTO;
+﻿using BookinKanAPI.DTOs;
+using BookinKanAPI.DTOs.BookingCarsDTO;
 using BookinKanAPI.Models;
 using Stripe;
 
@@ -11,6 +12,9 @@ namespace BookinKanAPI.ServicesManage.PaymentServiceManage
 
         Task<List<PaymentBooking>> GetPayment();
         Task<Refund> RefundPayment(string paymentIntentId);
+        Task<object> CreateOrUpdatePayment(PaymentDTO payment);
+        Task<string> UpdateStatusPayment(int ID, Status newStatus);
+        Task<object> UpdatePaymentStripe(int Id, int PaymentId);
 
     }
 }

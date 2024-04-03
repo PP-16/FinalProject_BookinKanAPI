@@ -29,7 +29,7 @@ namespace BookinKanAPI.Data
             modelBuilder.Entity<Passenger>().HasData(
                 new Passenger() { PassengerId = 1, PassengerName = "Admin", Email = "Admin@g.com", Password = passwordHash, IDCardNumber = "123456789", Phone = "0912345678", RoleId = 1 });
             modelBuilder.Entity<Driver>().HasData(
-    new Driver() { DriverId = 101,DriverName = "null",IDCardNumber ="null",Address="null", Charges = 0,Phone = "null",StatusDriver=0 });
+    new Driver() { DriverId = 101,DriverName = "ไม่มีการเลือก",IDCardNumber ="null",Address="null", Charges = 0,Phone = "null",StatusDriver=0 });
         }
 
         public DbSet<Passenger> Passengers { get; set; }
@@ -46,5 +46,10 @@ namespace BookinKanAPI.Data
         public DbSet<RouteCars>RouteCars { get; set; }
         public DbSet<PaymentBooking> PaymentBookings { get; set; }
 
+        public DbSet<News> News { get; set; }
+        public DbSet<ImageNews> ImageNews { get; set; }
+
+        public DbSet<SystemSetting> SystemSettings { get; set; }
+        public DbSet<ImageSlide> ImageSlides { get; set; }
     }
 }

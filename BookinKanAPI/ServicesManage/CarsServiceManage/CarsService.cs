@@ -3,6 +3,7 @@ using Azure.Core;
 using BookinKanAPI.Data;
 using BookinKanAPI.DTOs;
 using BookinKanAPI.Models;
+using BookinKanAPI.ServicesManage.ImageServiceManage;
 using Microsoft.AspNetCore.Authentication.OAuth.Claims;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,12 +23,13 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
         }
         public async Task<string> CreateandUpdateCars(CarsRequestDTO carsDto)
         {
-            var cars = await _dataContext.Cars.AsNoTracking().Include(c => c.ClassCars).FirstOrDefaultAsync(i => i.CarsId == carsDto.CarsId);
-            var mappCars = _mapper.Map<Cars>(carsDto);
 
-            (string errorMessage, List<string> imageNames) = await UploadImageAsync(carsDto.ImageCars);
+            (string errorMessage, List<string> imageNames) = await UploadImageAsync(carsDto.FormFiles);
             if (!string.IsNullOrEmpty(errorMessage)) return errorMessage;
 
+            var cars = await _dataContext.Cars.AsNoTracking().Include(c => c.ClassCars).FirstOrDefaultAsync(i => i.CarsId == carsDto.CarsId);
+            
+            var mappCars = _mapper.Map<Cars>(carsDto);
 
             if (cars == null)
             {
@@ -49,7 +51,7 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
                         {
                             CarsId = mappCars.CarsId,
                             Image = image
-                        }); 
+                        });
                     }
                     await _dataContext.ImageCars.AddRangeAsync(images);
                 }
@@ -98,7 +100,7 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
 
         public async Task<Cars> GetByIdAsync(int id)
         {
-            return await _dataContext.Cars.Include(i=>i.ImageCars).AsNoTracking().FirstOrDefaultAsync(p => p.CarsId == id);
+            return await _dataContext.Cars.AsNoTracking().FirstOrDefaultAsync(p => p.CarsId == id);
         }
         public async Task<List<Cars>> GetCarForRent()
         {
@@ -106,7 +108,7 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
         }
         public async Task<List<Cars>> GetCars()
         {
-            return await _dataContext.Cars.Include(c => c.ClassCars).Include(i => i.ImageCars).OrderByDescending(i => i.CarsId).ToListAsync();
+            return await _dataContext.Cars.Include(c => c.ClassCars).OrderByDescending(i => i.CarsId).ToListAsync();
         }
 
         public async Task<List<Cars>> SearchCarsBrand(string CarName)
@@ -151,7 +153,7 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
             if (cars != null)
             {
                 DateTime currentDate = DateTime.Now;
-                if (order != null && currentDate >= order.DateTimePickup && currentDate <= order.DateTimeReturn)
+                if (order != null && currentDate.Date >= order.DateTimePickup.Date && currentDate.Date <= order.DateTimeReturn.Date)
                 {
                     cars.StatusCar = StatusCars.Rented;
                 }
