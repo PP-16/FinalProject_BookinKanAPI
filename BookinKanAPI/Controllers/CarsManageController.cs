@@ -35,7 +35,7 @@ namespace BookinKanAPI.Controllers
             return Ok(StatusCodes.Status201Created);
         }
 
-        [HttpDelete("[action]")]
+        [HttpPost("[action]")]
         public async Task<ActionResult> DeleteClassCars(int id)
         {
             var result = await _classCarsService.GetByIdAsync(id);
@@ -58,6 +58,13 @@ namespace BookinKanAPI.Controllers
 
         //    return Ok(StatusCodes.Status200OK);
         //}
+        [HttpPost("[action]")]
+        public async Task<ActionResult> DeleteImageCars(int id)
+        {
+            await _carsService.DeleteImageCars(id);
+            return Ok(new { status = "Deleted", id, StatusCodes.Status200OK });
+        }
+
 
 
         ///-----------------------------CarsManage-----------------------------///
@@ -77,7 +84,7 @@ namespace BookinKanAPI.Controllers
             return Ok(StatusCodes.Status201Created);
         }
          
-        [HttpDelete("[action]")]
+        [HttpPost("[action]")]
         public async Task<ActionResult> DeleteCars(int id)
         {
             var result = await _carsService.GetByIdAsync(id);

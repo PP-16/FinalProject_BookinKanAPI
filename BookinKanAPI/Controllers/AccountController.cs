@@ -42,7 +42,7 @@ namespace BookinKanAPI.Controllers
         }
 
         [HttpPost("[action]")]
-        public async Task<IActionResult> Register([FromForm]RegisterDTO request)
+        public async Task<IActionResult> Register(RegisterDTO request)
         {
             var user = await _service.Register(request);
 
@@ -104,17 +104,25 @@ namespace BookinKanAPI.Controllers
             return Ok(StatusCodes.Status200OK);
         }
 
+        //[Authorize]
+        [HttpPost("[action]")]
+        public async Task<IActionResult> updateProfileuser([FromForm] UploadImageDTO uploadImageDTO)
+        {
+            var result = await _service.UploadImageUser(uploadImageDTO);
+            if (result != null) return BadRequest();
 
+            return Ok(StatusCodes.Status200OK);
+        }
 
         //**********************************************Role***************************************************************************************************//
 
         [HttpPost("[action]")]
-        public async Task<IActionResult> CreateNewRoles(string rolename, string rolenameTH)
+        public async Task<IActionResult> CreateNewRoles(RoleDTO roleDTO)
         {
-            var result = await _service.createRole(rolename, rolenameTH);
-            if (result == null) return BadRequest();
+            var result = await _service.createAndUpdateRole(roleDTO);
+            if (result != null) return BadRequest();
 
-            return Ok(result);
+            return Ok(StatusCodes.Status200OK);
         }
 
         [HttpGet("[action]")]
@@ -123,6 +131,14 @@ namespace BookinKanAPI.Controllers
             return Ok(await _service.getRole());
         }
 
+        [HttpPost("[action]")]
+        public async Task<ActionResult> DeleteRole(int id)
+        {
+            var result = await _service.GetRoleByIdAsync(id);
+            if (result == null) return NotFound();
+            await _service.DeleteRole(result);
+            return Ok(new { status = "Deleted", result, StatusCodes.Status200OK });
+        }
         //[HttpPost("[action]")]
         //public async Task<IActionResult> CheckIsuseRoles(int Id, bool isuse)
         //{

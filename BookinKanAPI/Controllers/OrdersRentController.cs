@@ -21,7 +21,26 @@ namespace BookinKanAPI.Controllers
         [HttpGet("[action]")]
         public async Task<IActionResult> GetOrder()
         {
-            return Ok(await _orderService.GetOrders());
+            List<OrderRent> orderRents = await _orderService.GetOrders();
+
+            foreach (var orderRent in orderRents)
+            {
+                // Check if ConfirmReturn is false and DateTimeReturn is in the past
+                if (orderRent.ConfirmReturn != true&& orderRent.OrderSatus == Status.CompletePayment && orderRent.OrderRentItems.Any(item => item.DateTimeReturn < DateTime.Now))
+                {
+                    // Call the method to find past due orders
+                    await _orderService.CheckPastDueOrders(orderRents);
+                }
+            }
+
+                    
+            return Ok(orderRents);
+        }
+
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GetById(int ID)
+        {
+            return Ok(await _orderService.GetOrderById(ID));
         }
 
 
@@ -80,6 +99,55 @@ namespace BookinKanAPI.Controllers
             if (result != null) return BadRequest();
 
             return Ok(StatusCodes.Status200OK);
+        }
+        [HttpGet("[action]")]
+        public async Task<IActionResult> CheckPastDueOrders()
+        {
+            List<OrderRent> orderRents = await _orderService.GetOrders();
+            List<OrdersPastDue> pastDueOrders = new List<OrdersPastDue>(); // Initialize pastDueOrders here
+
+            foreach (var orderRent in orderRents)
+            {
+                // Check if ConfirmReturn is false and DateTimeReturn is in the past
+                if (orderRent.ConfirmReturn != true && orderRent.OrderRentItems.Any(item => item.DateTimeReturn < DateTime.Now))
+                {
+                    // Call the method to find past due orders
+                    var ordersPastDue = await _orderService.CheckPastDueOrders(orderRents);
+                    if (ordersPastDue != null)
+                    {
+                        pastDueOrders.AddRange(ordersPastDue);
+                    }
+                }
+            }
+
+            return Ok(pastDueOrders);
+        }
+
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GetOrderPast()
+        {
+            return Ok(await _orderService.GetOrdersPastDues());
+        }
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GetOrderPastById(int orderRentId)
+        {
+            return Ok(await _orderService.GetOrderPastDuesById(orderRentId));
+        }
+
+        [HttpPost("[action]")]
+        public async Task<IActionResult> PaiedPastDue(int Id)
+        {
+            var result = await _orderService.ChangePaymentPastDueStatus(Id);
+            if (result != null) return BadRequest();
+
+            return Ok(StatusCodes.Status200OK);
+        }
+
+        [Authorize]
+        [HttpGet("[action]")]
+        public async Task<IActionResult> getByPassenger()
+        {
+            return Ok(await _orderService.GetOrdersByUser());
         }
     }
 }

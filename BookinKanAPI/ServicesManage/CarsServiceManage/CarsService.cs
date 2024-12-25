@@ -37,7 +37,7 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
                 if (Class == null) return "Can't find Class";
                 var carNum = await _dataContext.Cars.FirstOrDefaultAsync(c => c.CarRegistrationNumber == carsDto.CarRegistrationNumber);
                 if (carNum != null) return "have this car";
-
+                mappCars.StatusCar = StatusCars.Empty;
 
                 await _dataContext.Cars.AddAsync(mappCars);
                 await _dataContext.SaveChangesAsync();
@@ -71,36 +71,63 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
                             Image = image
                         });
                     }
-                    //ลบไฟล์เดิม
-                    var oldImages = await _dataContext.ImageCars.Where(p => p.CarsId == mappCars.CarsId).ToListAsync();
-                    if (oldImages != null)
-                    {
-                        //ลบไฟล์ใน database
-                        _dataContext.ImageCars.RemoveRange(oldImages);
-                        //ลบไฟล์ในโฟลเดอร์
-
-                        var files = oldImages.Select(p => p.Image).ToList();
-                        await _imageCarsService.DeleteFileImages(files);
-
-                    }
-                    //ใส่ไฟล์เข้าไปใหม่
                     await _dataContext.ImageCars.AddRangeAsync(images);
+                    //ลบไฟล์เดิม
+                    //var oldImages = await _dataContext.ImageCars.Where(p => p.CarsId == mappCars.CarsId).ToListAsync();
+                    //if (oldImages != null)
+                    //{
+                    //    //ลบไฟล์ใน database
+                    //    _dataContext.ImageCars.RemoveRange(oldImages);
+                    //    //ลบไฟล์ในโฟลเดอร์
+
+                    //    var files = oldImages.Select(p => p.Image).ToList();
+                    //    await _imageCarsService.DeleteFileImages(files);
+
+                    //}
+                    ////ใส่ไฟล์เข้าไปใหม่
+
                 }
             }
             var result = await _dataContext.SaveChangesAsync();
             if (result <= 0) return "Can't create this cars";
             return null!;
         }
+        public async Task<object> DeleteImageCars(int imgId)
+        {
+            //ลบไฟล์เดิม
+            var oldImages = await _dataContext.ImageCars.FirstOrDefaultAsync(p => p.ImageCarsId == imgId);
+            if (oldImages != null)
+            {
+                //ลบไฟล์ใน database
+                _dataContext.ImageCars.Remove(oldImages);
+                //ลบไฟล์ในโฟลเดอร์
 
+                var files = oldImages.Image;
+
+                var test = new List<string>
+                {
+                    files
+                };
+
+                await _imageCarsService.DeleteFileImages(test);
+             
+            }
+           
+            var result = await _dataContext.SaveChangesAsync();
+            if (result <= 0) return "Can't create this cars";
+            return null!;
+
+        }
         public async Task DeleteCars(Cars Cars)
         {
             _dataContext.Cars.Remove(Cars);
             await _dataContext.SaveChangesAsync();
         }
-
         public async Task<Cars> GetByIdAsync(int id)
         {
-            return await _dataContext.Cars.AsNoTracking().FirstOrDefaultAsync(p => p.CarsId == id);
+            return await _dataContext.Cars
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.CarsId == id);
         }
         public async Task<List<Cars>> GetCarForRent()
         {
@@ -108,14 +135,16 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
         }
         public async Task<List<Cars>> GetCars()
         {
-            return await _dataContext.Cars.Include(c => c.ClassCars).OrderByDescending(i => i.CarsId).ToListAsync();
+            return await _dataContext.Cars
+                .Include(c => c.ClassCars)
+                .Include(i => i.ImageCars)
+                .OrderByDescending(i => i.CarsId)
+                .ToListAsync();
         }
-
         public async Task<List<Cars>> SearchCarsBrand(string CarName)
         {
-            return await _dataContext.Cars.Include(c => c.ClassCars).Where(n => n.CarBrand.Contains(CarName)).ToListAsync();
+            return await _dataContext.Cars.Include(c => c.ClassCars).Include(i => i.ImageCars).Where(n => n.CarBrand.Contains(CarName)).ToListAsync();
         }
-
         public async Task<string> UpdateClassCar(int ID, int ClassID)
         {
             var classcar = await _dataContext.ClassCars.FirstOrDefaultAsync(c => c.ClassCarsId == ClassID);
@@ -126,12 +155,12 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
             {
                 car.ClassCarsId = ClassID;
             }
+
             var result = await _dataContext.SaveChangesAsync();
             if (result <= 0) return "Can't Update Sattus";
 
             return null;
         }
-
         public async Task<string> UpdateStatusCars(int ID, StatusCars newStatus)
         {
             var cars = await _dataContext.Cars.FindAsync(ID);
@@ -145,7 +174,6 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
 
             return null;
         }
-
         public async Task<string> UpdateStatusRentCars(int ID)
         {
             var cars = await _dataContext.Cars.FindAsync(ID);
@@ -169,7 +197,6 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
 
             return null;
         }
-
         public async Task<(string errorMessage, List<string> imageNames)> UploadImageAsync(IFormFileCollection formFiles)
         {
             var errorMessege = string.Empty;

@@ -8,7 +8,7 @@
         public  string Password { get; set; }
         public string Phone { get; set; }
         public bool isUse { get; set; }
-        public IFormFileCollection? ImagePassenger { get; set; } 
+        //public IFormFileCollection? ImagePassenger { get; set; } 
 
     }
 }

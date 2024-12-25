@@ -55,6 +55,10 @@ namespace BookinKanAPI.Migrations
                     b.Property<int>("TotalPrice")
                         .HasColumnType("int");
 
+                    b.Property<string>("note")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("BookingId");
 
                     b.HasIndex("ItineraryId");
@@ -290,6 +294,9 @@ namespace BookinKanAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NewsId"));
 
+                    b.Property<DateTime?>("CreateAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("NewsDetails")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -381,6 +388,36 @@ namespace BookinKanAPI.Migrations
                     b.ToTable("OrderRentItems");
                 });
 
+            modelBuilder.Entity("BookinKanAPI.Models.OrdersPastDue", b =>
+                {
+                    b.Property<int>("OrdersPastDueId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrdersPastDueId"));
+
+                    b.Property<int>("NumberOfDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrderRentId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Paied")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("RetrunDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TotalPricePastDue")
+                        .HasColumnType("int");
+
+                    b.HasKey("OrdersPastDueId");
+
+                    b.HasIndex("OrderRentId");
+
+                    b.ToTable("OrdersPastDues");
+                });
+
             modelBuilder.Entity("BookinKanAPI.Models.Passenger", b =>
                 {
                     b.Property<int>("PassengerId")
@@ -431,10 +468,10 @@ namespace BookinKanAPI.Migrations
                             Email = "Admin@g.com",
                             IDCardNumber = "123456789",
                             PassengerName = "Admin",
-                            Password = "$2a$11$MgfUYbXM4jQ0UlwRlQYs5OyA7MvECvizjLFfZBXXQQhF5nMhH9bJm",
+                            Password = "$2a$11$xxQsWMksO0gUUTNRdpIKBOhGqAI4yYdFQz6r420GJv3FUO8bhKsYm",
                             Phone = "0912345678",
                             RoleId = 1,
-                            isUse = false
+                            isUse = true
                         });
                 });
 
@@ -464,6 +501,9 @@ namespace BookinKanAPI.Migrations
                     b.Property<int?>("OrderRentId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("OrdersPastDueId")
+                        .HasColumnType("int");
+
                     b.Property<string>("PaymentIntentId")
                         .HasColumnType("nvarchar(max)");
 
@@ -475,6 +515,8 @@ namespace BookinKanAPI.Migrations
                     b.HasIndex("BookingId");
 
                     b.HasIndex("OrderRentId");
+
+                    b.HasIndex("OrdersPastDueId");
 
                     b.ToTable("PaymentBookings");
                 });
@@ -511,6 +553,12 @@ namespace BookinKanAPI.Migrations
                             RoleId = 2,
                             RoleName = "Passenger",
                             RoleNameTH = "ผู้ใช้"
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            RoleName = "Employee",
+                            RoleNameTH = "พนักงาน"
                         });
                 });
 
@@ -699,6 +747,17 @@ namespace BookinKanAPI.Migrations
                     b.Navigation("OrderRent");
                 });
 
+            modelBuilder.Entity("BookinKanAPI.Models.OrdersPastDue", b =>
+                {
+                    b.HasOne("BookinKanAPI.Models.OrderRent", "OrderRent")
+                        .WithMany()
+                        .HasForeignKey("OrderRentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OrderRent");
+                });
+
             modelBuilder.Entity("BookinKanAPI.Models.Passenger", b =>
                 {
                     b.HasOne("BookinKanAPI.Models.Role", "Roles")
@@ -720,9 +779,15 @@ namespace BookinKanAPI.Migrations
                         .WithMany()
                         .HasForeignKey("OrderRentId");
 
+                    b.HasOne("BookinKanAPI.Models.OrdersPastDue", "OrdersPastDue")
+                        .WithMany()
+                        .HasForeignKey("OrdersPastDueId");
+
                     b.Navigation("Booking");
 
                     b.Navigation("OrderRent");
+
+                    b.Navigation("OrdersPastDue");
                 });
 
             modelBuilder.Entity("BookinKanAPI.Models.Cars", b =>

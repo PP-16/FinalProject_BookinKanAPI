@@ -11,7 +11,6 @@ namespace BookinKanAPI.DTOs
         public  string CarBrand { get; set; }
         public  string DetailCar { get; set; }
         public  int CategoryCar { get; set; }
-        public  int StatusCar { get; set; } = 0;
         public  int ClasscarsId { get; set; }
         public int QuantitySeat { get; set; }
         public int PriceSeat { get; set; }

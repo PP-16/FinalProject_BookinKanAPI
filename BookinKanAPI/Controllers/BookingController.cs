@@ -28,6 +28,17 @@ namespace BookinKanAPI.Controllers
             return Ok(await _bookingService.GetBooking());
         }
 
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GetBookingsFromItinerary(int itineraryId, DateTime dateBooking)
+        {
+            return Ok(await _bookingService.GetBookingfromItinerary(itineraryId,dateBooking));
+        }
+
+        [HttpGet("[action]")]
+        public async Task<IActionResult> CheckBookingAndUpdateStatus()
+        {
+            return Ok(await _bookingService.CheckAndUpdateBookingStatus());
+        }
 
         [HttpGet("[action]")]
         public async Task<IActionResult> GetTotalPriceBookings()
@@ -105,7 +116,7 @@ namespace BookinKanAPI.Controllers
             return Ok(await _bookingService.GetBookingById(ID));
         }
 
-        [HttpDelete("[action]")]
+        [HttpPost("[action]")]
         public async Task<ActionResult> DeleteBooking(int id) 
         {
             var result = await _bookingService.GetByIdAsync(id);

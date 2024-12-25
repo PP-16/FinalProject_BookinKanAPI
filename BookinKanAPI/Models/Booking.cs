@@ -15,6 +15,7 @@ namespace BookinKanAPI.Models
             set => SeatNumbers = value.Split(',').ToList();
         }
         public int TotalPrice { get; set; }
+        public string note { get; set; }    
         public Status BookingStatus { get; set; }
 
         public int PassengerId { get; set; }

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BookinKanAPI.Data;
+using BookinKanAPI.DTOs.AuthenDto;
 using BookinKanAPI.DTOs.RentCarsDTO;
 using BookinKanAPI.Models;
 using Microsoft.EntityFrameworkCore;
@@ -19,17 +20,17 @@ namespace BookinKanAPI.ServicesManage.CarsServiceManage
 
         public async Task<string> CreateandUpdateClass(ClassCarsDTO classDto)
         {
-            var Class = await _dataContext.ClassCars.AsNoTracking().FirstOrDefaultAsync(i=>i.ClassCarsId == classDto.ClassCarsId);
-            var Classcar = _mapper.Map<ClassCars>(classDto);
-            if (Class == null)
+            var classcar = await _dataContext.ClassCars.AsNoTracking().FirstOrDefaultAsync(i=>i.ClassCarsId == classDto.ClassCarsId);
+            var mapclass = _mapper.Map<ClassCars>(classDto);
+            if (classcar == null)
             {
-                var car = await _dataContext.ClassCars.FirstOrDefaultAsync(n => n.ClassName == classDto.ClassName);
+                var car = await _dataContext.ClassCars.AsNoTracking().FirstOrDefaultAsync(n => n.ClassName == classDto.ClassName);
                 if (car != null) { return "this Class has alredy"; }
-                await _dataContext.ClassCars.AddAsync(Classcar);
+                await _dataContext.ClassCars.AddAsync(mapclass);
             }
             else
             {
-                _dataContext.ClassCars.Update(Classcar);
+                _dataContext.ClassCars.Update(mapclass);
             }
 
             var result = await _dataContext.SaveChangesAsync();

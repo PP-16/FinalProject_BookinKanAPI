@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BookinKanAPI.DTOs;
+using BookinKanAPI.DTOs.AuthenDto;
 using BookinKanAPI.DTOs.BookingCarsDTO;
 using BookinKanAPI.DTOs.RentCarsDTO;
 using BookinKanAPI.Models;
@@ -10,8 +11,8 @@ namespace BookinKanAPI
     {
         public AutoMapperProfile()
         {
-            CreateMap<ClassCars, ClassCarsDTO>();
-            CreateMap<ClassCarsDTO, ClassCars>().ForMember(dest => dest.ClassCarsId, opt => opt.Ignore()); ;
+            CreateMap<ClassCars, ClassCarsDTO>().ReverseMap();
+            //CreateMap<ClassCarsDTO, ClassCars>().ForMember(dest => dest.ClassCarsId, opt => opt.Ignore()); ;
 
             //CreateMap<Cars, CarsRequestDTO>();
             CreateMap<CarsRequestDTO, Cars>(); //.ForMember(dest => dest.ImageCars, opt => opt.MapFrom(src => src.ImageCars.Select(image => new ImageCars { Image = image.FileName })));
@@ -41,6 +42,7 @@ namespace BookinKanAPI
             .ReverseMap();
             CreateMap<EmployeeBookingDTO, Booking>();
 
+            CreateMap<Role, RoleDTO>().ReverseMap();
 
             CreateMap<PaymentBooking, PaymentDTO>().ReverseMap();
             //CreateMap<PaymentDTO, PaymentBooking>();

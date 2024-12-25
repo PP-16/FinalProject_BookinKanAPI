@@ -10,5 +10,6 @@ namespace BookinKanAPI.DTOs.BookingCarsDTO
         public List<string> SeatNumbers { get; set; }
         public int TotalPrice { get; set; }
         public int ItineraryId { get; set; }
+        public string note { get; set; }
     }
 }

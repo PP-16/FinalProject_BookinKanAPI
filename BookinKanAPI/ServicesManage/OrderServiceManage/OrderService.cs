@@ -171,6 +171,17 @@ namespace BookinKanAPI.ServicesManage.OrderServiceManage
         .ToListAsync();
         }
 
+        public async Task<List<OrderRent>> GetOrderById(int ID)
+        {
+            return await _dataContext.OrderRents
+          .Include(u => u.Passenger)
+          .Include(o => o.OrderRentItems).ThenInclude(d => d.Driver)
+          .Include(o => o.OrderRentItems).ThenInclude(d => d.Cars).ThenInclude(c => c.ClassCars)
+          .Include(o => o.OrderRentItems).ThenInclude(d => d.Cars).ThenInclude(c => c.ImageCars)
+                  .Where(i => i.OrderRentId == ID)
+                .ToListAsync();
+        }
+
         public async Task<List<OrderRentItem>> GetOrdersItems()
         {
             return await _dataContext.OrderRentItems.AsNoTracking()
@@ -221,24 +232,53 @@ namespace BookinKanAPI.ServicesManage.OrderServiceManage
             return null;
         }
 
+        //public Dictionary<DateTime, long> GetTotalPriceByReturnDate()
+        //{
+        //    Dictionary<DateTime, long> totalPriceByDate = new Dictionary<DateTime, long>();
+
+        //    var orderItems = _dataContext.OrderRentItems; // Assuming _dataContext is the DataContext of your database
+        //    if (orderItems != null)
+        //    {
+        //        foreach (var item in orderItems)
+        //        {
+        //            DateTime returnDate = item.DateTimeReturn.Date; // Extracting date part only
+        //            long total = item.Quantity * item.CarsPrice;
+
+        //            if (totalPriceByDate.ContainsKey(returnDate))
+        //            {
+        //                totalPriceByDate[returnDate] += total; // Add to existing total if date already exists
+        //            }
+        //            else
+        //            {
+        //                totalPriceByDate[returnDate] = total; // Create new entry if date doesn't exist
+        //            }
+        //        }
+        //    }
+
+
+        //    return totalPriceByDate;
+        //}
         public Dictionary<DateTime, long> GetTotalPriceByReturnDate()
         {
             Dictionary<DateTime, long> totalPriceByDate = new Dictionary<DateTime, long>();
 
-            var orderItems = _dataContext.OrderRentItems; // Assuming _dataContext is the DataContext of your database
-
-            foreach (var item in orderItems)
+            // Assuming _dataContext is properly instantiated and injected
+            var orderItems = _dataContext.OrderRentItems;
+            if (orderItems != null)
             {
-                DateTime returnDate = item.DateTimeReturn.Date; // Extracting date part only
-                long total = item.Quantity * item.CarsPrice;
+                foreach (var item in orderItems)
+                {
+                    DateTime returnDate = item.DateTimeReturn.Date; // Extracting date part only
+                    long total = item.Quantity * item.CarsPrice;
 
-                if (totalPriceByDate.ContainsKey(returnDate))
-                {
-                    totalPriceByDate[returnDate] += total; // Add to existing total if date already exists
-                }
-                else
-                {
-                    totalPriceByDate[returnDate] = total; // Create new entry if date doesn't exist
+                    if (totalPriceByDate.ContainsKey(returnDate))
+                    {
+                        totalPriceByDate[returnDate] += total; // Add to existing total if date already exists
+                    }
+                    else
+                    {
+                        totalPriceByDate[returnDate] = total; // Create new entry if date doesn't exist
+                    }
                 }
             }
 
@@ -304,6 +344,237 @@ namespace BookinKanAPI.ServicesManage.OrderServiceManage
 
             return totalPriceByDate;
 
+        }
+
+
+        public async Task<List<OrdersPastDue>> GetOrdersPastDues()
+        {
+            return (await _dataContext.OrdersPastDues.Include(r => r.OrderRent).ThenInclude(r => r.OrderRentItems).ThenInclude(c => c.Cars).ThenInclude(i => i.ImageCars)
+            .Include(r => r.OrderRent).ThenInclude(r => r.OrderRentItems).ThenInclude(d => d.Driver).OrderByDescending(i=>i.OrdersPastDueId).ToListAsync());
+        }
+        public async Task<List<OrdersPastDue>> GetOrderPastDuesById(int orderRentId)
+        {
+            return await _dataContext.OrdersPastDues
+           .Include(r => r.OrderRent).ThenInclude(r=>r.OrderRentItems).ThenInclude(c=>c.Cars).ThenInclude(i=>i.ImageCars)
+            .Include(r => r.OrderRent).ThenInclude(r => r.OrderRentItems).ThenInclude(d => d.Driver)
+           .Where(opd => opd.OrderRentId == orderRentId)
+           .ToListAsync();
+        }
+
+        //public async Task<List<OrdersPastDue>> CheckPastDueOrders(List<OrderRent> orderRents)
+        //{
+        //    List<OrdersPastDue> pastDueOrders = new List<OrdersPastDue>();
+
+        //    foreach (var orderRent in orderRents)
+        //    {
+        //        if (orderRent.ConfirmReturn == false)
+        //        {
+        //            // Iterate through OrderRentItems to find overdue items
+        //            foreach (var item in orderRent.OrderRentItems)
+        //            {
+        //                if (item.DateTimeReturn < DateTime.Now)
+        //                {
+        //                    // Check if OrdersPastDues already contains OrderRentItemId
+        //                    bool isExist = await _dataContext.OrdersPastDues.AnyAsync(opd => opd.OrderRentItemId == item.OrderRentItemId);
+        //                    if (!isExist)
+        //                    {
+        //                        // Calculate the number of days overdue
+        //                        int numberOfDays = (int)(DateTime.Now - item.DateTimeReturn).TotalDays + 1;
+
+        //                        // Calculate the total price for the overdue item
+        //                        int totalPricePastDue = CalculateTotalPricePastDue(item);
+
+        //                        // Create OrdersPastDue object
+        //                        OrdersPastDue pastDueOrder = new OrdersPastDue
+        //                        {
+        //                            RetrunDate = orderRent.PaymentDate,
+        //                            NumberOfDays = numberOfDays,
+        //                            TotalPricePastDue = totalPricePastDue,
+        //                            OrderRentItemId = item.OrderRentItemId,
+        //                            orderRentItem = item,
+        //                            Paied = false
+        //                        };
+
+        //                        pastDueOrders.Add(pastDueOrder);
+
+        //                        // Add pastDueOrder to the context
+        //                        await _dataContext.OrdersPastDues.AddAsync(pastDueOrder);
+        //                    }
+        //                    else
+        //                    {
+        //                        // Calculate the number of days overdue
+        //                        int numberOfDays = (int)(DateTime.Now - item.DateTimeReturn).TotalDays;
+
+        //                        // Calculate the total price for the overdue item
+        //                        int totalPricePastDue = CalculateTotalPricePastDue(item);
+        //                        var existingOrderPastDue = await _dataContext.OrdersPastDues.FirstOrDefaultAsync(opd => opd.OrderRentItemId == item.OrderRentItemId);
+        //                        if (existingOrderPastDue != null && !existingOrderPastDue.Paied)
+        //                        {
+        //                            // Update existing OrdersPastDue
+        //                            existingOrderPastDue.NumberOfDays = numberOfDays;
+        //                            existingOrderPastDue.TotalPricePastDue = totalPricePastDue;
+
+
+        //                            // Update OrdersPastDue in the context
+        //                            _dataContext.OrdersPastDues.Update(existingOrderPastDue);
+        //                        }
+        //                    }
+
+
+        //                    // Check and update order status if necessary
+        //                    var orderStatus = await _dataContext.OrderRents.FindAsync(orderRent.OrderRentId);
+        //                    if (orderStatus != null && orderStatus.OrderSatus != Status.PastDue)
+        //                    {
+        //                        // Update the status immediately
+        //                        orderStatus.OrderSatus = Status.PastDue;
+        //                    }
+        //                }
+        //            }
+        //        }
+
+        //    }
+
+        //    // Save changes to the database
+        //    await _dataContext.SaveChangesAsync();
+
+        //    return pastDueOrders;
+        //}
+
+        public async Task<List<OrdersPastDue>> CheckPastDueOrders(List<OrderRent> orderRents)
+        {
+            List<OrdersPastDue> pastDueOrders = new List<OrdersPastDue>();
+
+            foreach (var orderRent in orderRents)
+            {
+                if (!orderRent.ConfirmReturn)
+                {
+                    // Use Include to load only necessary data for OrderRentItems
+                    var orderRentWithItems = await _dataContext.OrderRents
+                        .Include(o => o.OrderRentItems)
+                        .FirstOrDefaultAsync(o => o.OrderRentId == orderRent.OrderRentId);
+
+                    // Group OrderRentItems by OrderRentId
+                    var groupedItems = orderRentWithItems.OrderRentItems
+                        .GroupBy(item => item.OrderRentId)
+                        .Select(group => new
+                        {
+                            OrderRentId = group.Key,
+                            Items = group.ToList()
+                        });
+
+                    foreach (var group in groupedItems)
+                    {
+                        // Use the first item in the group to create OrdersPastDue
+                        var firstItem = group.Items.FirstOrDefault();
+                        if (firstItem != null)
+                        {
+                            // Check if OrdersPastDues already contains OrderRentItemId
+                            bool isExist = await _dataContext.OrdersPastDues.AnyAsync(opd => opd.OrderRentId == firstItem.OrderRentId);
+                            if (!isExist)
+                            {
+                                //int numberOfDays = (int)(DateTime.Now - firstItem.DateTimeReturn).TotalDays + 1;
+                                //int totalPricePastDue = CalculateTotalPricePastDue(firstItem);
+                                int totalPricePastDue = CalculateTotalPricePastDue(group.Items);
+                                int numberOfDays = (int)(DateTime.Now - group.Items.First().DateTimeReturn).TotalDays;
+
+                                OrdersPastDue pastDueOrder = new OrdersPastDue
+                                {
+                                    RetrunDate = orderRent.PaymentDate,
+                                    NumberOfDays = numberOfDays,
+                                    TotalPricePastDue = totalPricePastDue,
+                                    OrderRentId = firstItem.OrderRentId,
+                                    Paied = false
+                                };
+
+                                pastDueOrders.Add(pastDueOrder);
+                                await _dataContext.OrdersPastDues.AddAsync(pastDueOrder);
+                                // Update order status if necessary
+                                if (orderRentWithItems.OrderSatus != Status.PastDue)
+                                {
+                                    orderRentWithItems.OrderSatus = Status.PastDue;
+                                    _dataContext.OrderRents.Update(orderRentWithItems);
+                                }
+                            }
+                            else
+                            {
+                                int totalPricePastDue = CalculateTotalPricePastDue(group.Items);
+                                int numberOfDays = (int)(DateTime.Now - group.Items.First().DateTimeReturn).TotalDays;
+
+                                var existingOrderPastDue = await _dataContext.OrdersPastDues.FirstOrDefaultAsync(opd => opd.OrderRentId == firstItem.OrderRentId);
+                                if (existingOrderPastDue != null && !existingOrderPastDue.Paied)
+                                {
+                                    existingOrderPastDue.NumberOfDays = numberOfDays;
+                                    existingOrderPastDue.TotalPricePastDue = totalPricePastDue;
+
+                                    _dataContext.OrdersPastDues.Update(existingOrderPastDue);
+                                }
+                            }
+                        }
+                    }
+
+
+                }
+            }
+
+            await _dataContext.SaveChangesAsync();
+
+            return pastDueOrders;
+        }
+
+        public async Task<string> ChangePaymentPastDueStatus(int Id)
+        {
+            var pastDues = await _dataContext.OrdersPastDues.FindAsync(Id);
+            if (pastDues != null)
+            {
+                pastDues.Paied = true;
+            }
+            var result = await _dataContext.SaveChangesAsync();
+            if (result <= 0) return "Can't Update Sattus";
+            return null;
+        }
+
+        private int CalculateTotalPricePastDue(IEnumerable<OrderRentItem> items)
+        {
+            int total = 0;
+
+            foreach (var item in items)
+            {
+                // Calculate total price only for the period that exceeds the due date
+                int daysOverdue = (int)(DateTime.Now - item.DateTimeReturn).TotalDays;
+
+                if (daysOverdue > 0)
+                {
+                    // Multiply the total by the number of days for each overdue item
+                    total += daysOverdue * (item.Quantity * item.CarsPrice);
+
+                    // Include driver charges for each day if applicable
+                    if (item.DriverId.HasValue)
+                    {
+                        total += daysOverdue * (int)item.Driver.Charges;
+                    }
+                }
+            }
+
+            return total;
+        }
+
+        public async Task<List<OrderRent>> GetOrdersByUser()
+        {
+            var orders = await _dataContext.OrderRents
+                    .Include(u => u.Passenger)
+                    .Include(o => o.OrderRentItems).ThenInclude(d => d.Driver)
+                    .Include(o => o.OrderRentItems).ThenInclude(d => d.Cars).ThenInclude(c => c.ClassCars)
+                    .Include(o => o.OrderRentItems).ThenInclude(d => d.Cars).ThenInclude(c => c.ImageCars)
+                    .Where(b => b.Passenger.Email == GetUser())
+                    .OrderByDescending(d => d.OrderRentItems.Max(x => x.DateTimeReturn))
+                    .ToListAsync();
+
+            if (orders == null || !orders.Any())
+            {
+                return null;
+            }
+
+            return orders;
         }
 
     }

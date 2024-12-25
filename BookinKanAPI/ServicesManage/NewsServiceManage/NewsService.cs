@@ -30,6 +30,7 @@ namespace BookinKanAPI.ServicesManage.NewsServiceManage
            
             if (news == null)
             {
+                mapNew.CreateAt = DateTime.Now;
                 _dataContext.News.AddAsync(mapNew);
                 await _dataContext.SaveChangesAsync();
                 //จัดการไฟล์ในฐานข้อมูล
@@ -49,6 +50,7 @@ namespace BookinKanAPI.ServicesManage.NewsServiceManage
             }
             else
             {
+                mapNew.CreateAt = DateTime.Now;
                 _dataContext.News.Update(mapNew);
                 //ตรวจสอบและจัดการกับไฟล์ที่ส่งเข้ามาใหม่
                 if (imageNames.Count > 0)
@@ -63,17 +65,17 @@ namespace BookinKanAPI.ServicesManage.NewsServiceManage
                         });
                     }
                     //ลบไฟล์เดิม
-                    var oldImages = await _dataContext.ImageNews.Where(p => p.NewsId == mapNew.NewsId).ToListAsync();
-                    if (oldImages != null)
-                    {
-                        //ลบไฟล์ใน database
-                        _dataContext.ImageNews.RemoveRange(oldImages);
-                        //ลบไฟล์ในโฟลเดอร์
+                    //var oldImages = await _dataContext.ImageNews.Where(p => p.NewsId == mapNew.NewsId).ToListAsync();
+                    //if (oldImages != null)
+                    //{
+                    //    //ลบไฟล์ใน database
+                    //    _dataContext.ImageNews.RemoveRange(oldImages);
+                    //    //ลบไฟล์ในโฟลเดอร์
 
-                        var files = oldImages.Select(p => p.Images).ToList();
-                        await _image.DeleteFileImages(files);
+                    //    var files = oldImages.Select(p => p.Images).ToList();
+                    //    await _image.DeleteFileImages(files);
 
-                    }
+                    //}
                     //ใส่ไฟล์เข้าไปใหม่
                     await _dataContext.ImageNews.AddRangeAsync(images);
                 }
@@ -118,9 +120,40 @@ namespace BookinKanAPI.ServicesManage.NewsServiceManage
 
         }
 
+        public async Task<object> DeleteImageNews(int imgId)
+        {
+            //ลบไฟล์เดิม
+            var oldImages = await _dataContext.ImageNews.FirstOrDefaultAsync(p => p.ImageNewsId == imgId);
+            if (oldImages != null)
+            {
+                //ลบไฟล์ใน database
+                _dataContext.ImageNews.Remove(oldImages);
+                //ลบไฟล์ในโฟลเดอร์
+
+                var files = oldImages.Images;
+
+                var filesNews = new List<string>
+         {
+             files
+         };
+
+                await _image.DeleteFileImages(filesNews);
+
+            }
+
+            var result = await _dataContext.SaveChangesAsync();
+            if (result <= 0) return "Can't delete image News";
+            return null!;
+
+        }
+
         public async Task<List<News>> getNews()
         {
-            return (await _dataContext.News.Include(i => i.ImageNews).ToListAsync());
+            return (await _dataContext.News.Include(i => i.ImageNews).OrderByDescending(d=>d.CreateAt).Take(4).ToListAsync());
+        }
+        public async Task<List<News>> getAllNews()
+        {
+            return (await _dataContext.News.Include(i => i.ImageNews).OrderByDescending(d => d.CreateAt).ToListAsync());
         }
 
         public async Task<List<News>> GetNewsById(int Id)

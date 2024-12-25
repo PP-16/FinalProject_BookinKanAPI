@@ -9,6 +9,7 @@ namespace BookinKanAPI.ServicesManage.SystemSettingServiceManage
         Task<string> CreateAndUpdateSystem(SystemSettingDTO settingDTO);
         Task<List<SystemSetting>> GetSystem();
         Task<List<SystemSetting>> GetSystemById(int Id);
+        Task<object> DeleteImageSlide(int imgId);
         Task<string> DeleteSetting(int Id);
     }
 }

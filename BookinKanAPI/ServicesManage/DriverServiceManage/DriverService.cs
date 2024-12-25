@@ -25,11 +25,12 @@ namespace BookinKanAPI.ServicesManage.DriverServiceManage
             {
                 var check = await _dataContext.Drivers.AsNoTracking().FirstOrDefaultAsync(n=>n.DriverName == driverDTO.DriverName);
                 if (check != null) return "has this Driver";
-               
+                mappDriver.isUse = true;
                 await _dataContext.Drivers.AddAsync(mappDriver);
             }
             else
             {
+
                 _dataContext.Drivers.Update(mappDriver);
             }
             var result = await _dataContext.SaveChangesAsync();

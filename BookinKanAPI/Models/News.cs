@@ -10,6 +10,8 @@ namespace BookinKanAPI.Models
 
         public string NewsName { get; set; }
         public string NewsDetails { get; set; }
+
+        public DateTime? CreateAt { get; set; }
         public ICollection<ImageNews> ImageNews { get; set; } = new List<ImageNews>();
     }
 

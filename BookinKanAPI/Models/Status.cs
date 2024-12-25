@@ -6,6 +6,7 @@
         Pending,
         CompletePayment,
         Cancle,
-        refundComplete
+        refundComplete,
+        PastDue
     }
 }

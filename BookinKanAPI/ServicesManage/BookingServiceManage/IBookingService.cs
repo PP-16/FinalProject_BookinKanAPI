@@ -25,5 +25,7 @@ namespace BookinKanAPI.ServicesManage.BookingServiceManage
         Task<Dictionary<DateTime, decimal>> GetTotalPricesByDateAtBooking();
         Task<Dictionary<DateTime, decimal>> GetTotalPricesByMountAtBooking(int month, int year);
         Task<Dictionary<DateTime, decimal>> GetTotalPricesByYearAtBooking(int year);
+        Task<object> CheckAndUpdateBookingStatus();
+        Task<List<Booking>> GetBookingfromItinerary(int itineraryId, DateTime dateBooking);
     }
 }

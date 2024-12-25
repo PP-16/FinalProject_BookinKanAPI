@@ -25,7 +25,12 @@ namespace BookinKanAPI.Models
         [JsonIgnore]
         public OrderRent OrderRent { get; set; }
 
-       
-         
+        public int? OrdersPastDueId { get; set; } = null;
+        [JsonIgnore]
+        public OrdersPastDue OrdersPastDue { get; set; }
+
+
+
+
     }
 }

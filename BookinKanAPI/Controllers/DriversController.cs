@@ -32,7 +32,7 @@ namespace BookinKanAPI.Controllers
             return Ok(StatusCodes.Status201Created);
         }
 
-        [HttpDelete("[action]")]
+        [HttpPost("[action]")]
         public async Task<ActionResult> DeleteCarDrivers(int id)
         {
             var result = await _driverService.GetByIdAsync(id);

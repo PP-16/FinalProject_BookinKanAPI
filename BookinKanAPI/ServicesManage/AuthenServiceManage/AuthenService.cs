@@ -9,6 +9,8 @@ using System.Text.RegularExpressions;
 using System.Text;
 using Azure.Core;
 using BookinKanAPI.ServicesManage.ImageServiceManage;
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BookinKanAPI.ServicesManage.AuthenServiceManage
 {
@@ -18,13 +20,15 @@ namespace BookinKanAPI.ServicesManage.AuthenServiceManage
         private readonly IConfiguration _config;
         private readonly IHttpContextAccessor _httpContext;
         private readonly IImageCarsService _image;
+        private readonly IMapper _mapper;
 
-        public AuthenService(DataContext context,IConfiguration config,IHttpContextAccessor httpContext,IImageCarsService image)
+        public AuthenService(DataContext context,IConfiguration config,IHttpContextAccessor httpContext,IImageCarsService image,IMapper mapper)
         {
             _context = context;
             _config = config;
             _httpContext = httpContext;
             _image = image;
+            _mapper = mapper;
         }
         private string GetUser() => _httpContext.HttpContext.User.FindFirstValue(ClaimTypes.Email);
         private bool IsValidEmail(string email)
@@ -85,15 +89,15 @@ namespace BookinKanAPI.ServicesManage.AuthenServiceManage
                 isUse = true
                 
             };
-            if (request.ImagePassenger != null)
-            {
-                (string errorMessage, List<string> imageNames) = await UploadImageAsync(request.ImagePassenger);
-                if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    return errorMessage;
-                }
-                passenger.ImagePassenger = imageNames[0];
-            }
+            //if (request.ImagePassenger != null)
+            //{
+            //    (string errorMessage, List<string> imageNames) = await UploadImageAsync(request.ImagePassenger);
+            //    if (!string.IsNullOrEmpty(errorMessage))
+            //    {
+            //        return errorMessage;
+            //    }
+            //    passenger.ImagePassenger = imageNames[0];
+            //}
             
 
 
@@ -101,6 +105,40 @@ namespace BookinKanAPI.ServicesManage.AuthenServiceManage
             var result = await _context.SaveChangesAsync();
             if (result <= 0) { return null; }
             return passenger;
+        }
+
+        //public async Task<object> UploadImageUser(IFormFileCollection formFiles)
+        //{
+        //    var user = _context.Passengers.Where(b => b.Email == GetUser());
+        //    if (user != null) {
+        //        (string errorMessage, List<string> imageNames) = await UploadImageAsync(formFiles);
+        //        if (!string.IsNullOrEmpty(errorMessage))
+        //        {
+        //            return errorMessage;
+        //        }
+        //       var update =  user.ImagePassenger = imageNames[0];
+
+        //        _context.Passengers.Update(update);
+        //    }
+        //}
+        public async Task<object> UploadImageUser(UploadImageDTO uploadImageDTO)
+        {
+            (string errorMessage, List<string> imageNames) = await UploadImageAsync(uploadImageDTO.ImagePassenger);
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                return errorMessage;
+            }
+            //var userEmail = GetUser();
+            var user = await _context.Passengers.FirstOrDefaultAsync(b => b.PassengerId == uploadImageDTO.PassengerId);
+            if (user != null)
+            {
+                    user.ImagePassenger = imageNames[0];
+            }
+          
+            var result = await _context.SaveChangesAsync();
+            if (result <= 0) { return "error uploade"; }
+
+            return null; // หรือสิ่งที่คุณต้องการส่งกลับหลังจากการอัปโหลดสำเร็จ
         }
 
         public async Task<(string errorMessage, List<string> imageNames)> UploadImageAsync(IFormFileCollection formFiles)
@@ -196,10 +234,12 @@ namespace BookinKanAPI.ServicesManage.AuthenServiceManage
                 {
                     return null; 
                 }
+
                 var userDto = new UserDTO()
                 {
                     PassengerId = user.PassengerId,
                     PassengerName = user.PassengerName,
+                    ImagePassenger = user.ImagePassenger,
                     Email = user.Email,
                     IDCardNumber = user.IDCardNumber,
                     Phone = user.Phone,
@@ -288,38 +328,40 @@ namespace BookinKanAPI.ServicesManage.AuthenServiceManage
         //************************************************RoleManage*****************************************************************************************//
 
 
-        public async Task<object> createRole (string rolename,string rolenameTH)
+        public async Task<object> createAndUpdateRole (RoleDTO roleDTO)
         {
-            var role = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == rolename || r.RoleNameTH == rolenameTH);
-            if (role != null) return null;
-
-            var newrole = new Role()
+            var role = await _context.Roles.AsNoTracking().FirstOrDefaultAsync(i => i.RoleId == roleDTO.RoleId);
+            var mappRole = _mapper.Map<Role>(roleDTO);
+            if (role == null)
             {
-                RoleName = rolename,
-                RoleNameTH = rolenameTH,
-            };
-
-            await _context.Roles.AddAsync(newrole);
+                var check = await _context.Roles.AsNoTracking().FirstOrDefaultAsync(o => o.RoleName == roleDTO.RoleName && o.RoleNameTH == roleDTO.RoleNameTH);
+                if (check != null) return "has this role";
+                await _context.Roles.AddAsync(mappRole);
+            }
+            else
+            {
+                _context.Roles.Update(mappRole);
+            }
             var result = await _context.SaveChangesAsync();
-            if (result <= 0) { return null; }
-            return newrole;
+            if (result <= 0) return "Can't Save";
 
+            return null!;
+
+        }
+        public async Task<Role> GetRoleByIdAsync(int id)
+        {
+            return await _context.Roles.FirstOrDefaultAsync(i => i.RoleId == id);
+        }
+        public async Task DeleteRole(Role role)
+        {
+            _context.Roles.Remove(role);
+            await _context.SaveChangesAsync();
         }
 
         public async Task<object> getRole()
         {
             return await _context.Roles.OrderByDescending(i => i.RoleId).ToListAsync();
         }
-        //public async Task<string> ChangeIsuseRole(int Id, bool isuse)
-        //{
-        //    var checkIsuse = await _context.Roles.FindAsync(Id);
-        //    if (checkIsuse != null)
-        //    {
-        //        checkIsuse.isUse = isuse;
-        //    }
-        //    var result = await _context.SaveChangesAsync();
-        //    if (result <= 0) return "Can't Update Sattus";
-        //    return null;
-        //}
+
     }
 }

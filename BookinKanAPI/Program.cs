@@ -99,6 +99,7 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseCors(MyAllowSpecificOrigins);
+app.MapFallbackToController("Index", "Fallback");
 
 app.UseAuthentication();
 app.UseAuthorization();

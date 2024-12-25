@@ -40,7 +40,15 @@ namespace BookinKanAPI.Controllers
             return Ok(StatusCodes.Status200OK);
         }
 
-        [HttpDelete("[action]")]
+        [HttpPost("[action]")]
+        public async Task<ActionResult> DeleteImageSlides(int id)
+        {
+            await _settingService.DeleteImageSlide(id);
+            return Ok(new { status = "Deleted", id, StatusCodes.Status200OK });
+        }
+
+
+        [HttpPost("[action]")]
         public async Task<IActionResult> DeleteSystemSetting(int Id)
         {
             return Ok(await _settingService.DeleteSetting(Id));

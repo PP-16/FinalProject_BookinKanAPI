@@ -182,6 +182,7 @@ namespace BookinKanAPI.ServicesManage.BookingServiceManage
         public async Task<List<Booking>> GetBookingById(int ID)
         {
             return await _dataContext.Bookings
+                .Include(n=>n.Passenger)
                 .Include(n=>n.Itinerary).ThenInclude(r=>r.RouteCars)
                 .Include(n=>n.Itinerary).ThenInclude(c=>c.Cars)
                 .Where(i => i.BookingId == ID)
@@ -326,5 +327,36 @@ namespace BookinKanAPI.ServicesManage.BookingServiceManage
             return null;
         }
 
+        public async Task<object> CheckAndUpdateBookingStatus()
+        {
+            var bookingsToUpdate = await _dataContext.Bookings.Where(b => b.BookingStatus == 0 ).ToListAsync();
+
+            if(bookingsToUpdate != null && bookingsToUpdate.Count != 0 )
+            {
+                foreach (var booking in bookingsToUpdate)
+                {
+                   if(booking.DateAtBooking < DateTime.Now || booking.DateAtBooking > DateTime.Today.AddDays(-3))
+                    {
+                        booking.BookingStatus = Status.PastDue;
+                    }
+                }
+            }
+        
+
+            var result = await _dataContext.SaveChangesAsync();
+            if (result <= 0) return "Can't Update Sattus";
+            return bookingsToUpdate;
+        }
+
+
+        public async Task<List<Booking>> GetBookingfromItinerary(int itineraryId,DateTime dateBooking)
+        {
+            return await _dataContext.Bookings
+                .Include(p => p.Passenger)
+                .Include(i => i.Itinerary).ThenInclude(c => c.Cars)
+                .Include(i => i.Itinerary).ThenInclude(r => r.RouteCars)
+                .Where(b=>b.ItineraryId == itineraryId && b.DateAtBooking.Date == dateBooking.Date)
+                .OrderByDescending(i => i.BookingId).ToListAsync();
+        }
     }
 }

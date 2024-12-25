@@ -21,6 +21,14 @@ namespace BookinKanAPI.Controllers
         {
             return Ok(await _newsService.getNews());
         }
+
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GetAllNews()
+        {
+            return Ok(await _newsService.getAllNews());
+        }
+
+
         [HttpGet("[action]")]
         public async Task<IActionResult> GetById(int Id)
         {
@@ -38,7 +46,7 @@ namespace BookinKanAPI.Controllers
             return Ok(StatusCodes.Status200OK);
         }
 
-        [HttpDelete("[action]")]
+        [HttpPost("[action]")]
         public async Task<IActionResult> DeleteNewsById(int Id)
         {
             var result = await _newsService.DeleteNews(Id);
@@ -47,7 +55,12 @@ namespace BookinKanAPI.Controllers
 
             return Ok(StatusCodes.Status200OK);
         }
-
+        [HttpPost("[action]")]
+        public async Task<ActionResult> DeleteImageNewss(int id)
+        {
+            await _newsService.DeleteImageNews(id);
+            return Ok(new { status = "Deleted", id, StatusCodes.Status200OK });
+        }
 
     }
 }

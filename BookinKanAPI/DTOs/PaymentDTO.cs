@@ -11,6 +11,7 @@ namespace BookinKanAPI.DTOs
         public int? BookingId { get; set; }
 
         public int? OrderRentId { get; set; }
+        public int? OrdersPastDueId { get; set; }
         //public Status PymentSatus { get; set; }
 
         public IFormFileCollection? ImagePayment { get; set; }

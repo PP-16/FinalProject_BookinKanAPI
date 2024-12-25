@@ -32,12 +32,13 @@ namespace BookinKanAPI.Controllers
             return Ok(StatusCodes.Status201Created);
 
         }
-        [HttpDelete("[action]")]
+        [HttpPost("[action]")]
         public async Task<ActionResult> DeleteCarDrivers(int id)
         {
             var result = await _itineraryService.GetByIdAsync(id);
             if (result == null) return NotFound();
-            await _itineraryService.DeleteItinerary(result);
+           var deleteResult =  await _itineraryService.DeleteItinerary(result);
+            if (deleteResult != null) return BadRequest(deleteResult);
             return Ok(new { status = "Deleted", result, StatusCodes.Status200OK });
         }
 

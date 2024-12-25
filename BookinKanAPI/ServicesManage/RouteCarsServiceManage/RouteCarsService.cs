@@ -24,8 +24,9 @@ namespace BookinKanAPI.ServicesManage.RouteCarsServiceManage
             if(route == null)
             {
                 var check = await _dataContext.RouteCars.AsNoTracking().FirstOrDefaultAsync(o => o.OriginName == routeDto.OriginName && o.DestinationName == routeDto.DestinationName);
-                if (check != null) return "has this route";
+                if (check != null) return "has this role";
                 if (routeDto.OriginName == routeDto.DestinationName) return "this route it's same";
+                mappRoute.isUse = true;
                await _dataContext.RouteCars.AddAsync(mappRoute);
             }
             else

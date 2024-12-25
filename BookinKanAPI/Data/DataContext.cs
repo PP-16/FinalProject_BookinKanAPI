@@ -24,10 +24,11 @@ namespace BookinKanAPI.Data
             var passwordHash = BCrypt.Net.BCrypt.HashPassword("123456");
             modelBuilder.Entity<Role>().HasData(
                 new Role() { RoleId = 1, RoleName = "Admin",RoleNameTH = "ผู้ดูแลระบบ" },
-                new Role() { RoleId = 2, RoleName = "Passenger",RoleNameTH = "ผู้ใช้" }
+                new Role() { RoleId = 2, RoleName = "Passenger",RoleNameTH = "ผู้ใช้" },
+                 new Role() { RoleId = 3, RoleName = "Employee", RoleNameTH = "พนักงาน" }
                 );
             modelBuilder.Entity<Passenger>().HasData(
-                new Passenger() { PassengerId = 1, PassengerName = "Admin", Email = "Admin@g.com", Password = passwordHash, IDCardNumber = "123456789", Phone = "0912345678", RoleId = 1 });
+                new Passenger() { PassengerId = 1, PassengerName = "Admin", Email = "Admin@g.com", Password = passwordHash, IDCardNumber = "123456789", Phone = "0912345678", RoleId = 1,isUse=true, });
             modelBuilder.Entity<Driver>().HasData(
     new Driver() { DriverId = 101,DriverName = "ไม่มีการเลือก",IDCardNumber ="null",Address="null", Charges = 0,Phone = "null",StatusDriver=0 });
         }
@@ -40,6 +41,7 @@ namespace BookinKanAPI.Data
         public DbSet<Driver> Drivers { get; set; }
         public DbSet<OrderRent> OrderRents { get; set; }
         public DbSet<OrderRentItem> OrderRentItems { get; set; }
+        public DbSet<OrdersPastDue> OrdersPastDues { get; set; }
 
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Itinerary>Itineraries { get; set; }

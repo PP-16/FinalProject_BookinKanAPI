@@ -19,22 +19,23 @@ namespace BookinKanAPI.ServicesManage.ItineraryServiceManage
 
         public async Task<string> CreateItineraries(ItineraryDTO itineraryDTO)
         {
-            var checkId = await _dataContext.Itineraries.AsNoTracking().Include(c => c.Cars).Include(r => r.RouteCars).AsNoTracking().FirstOrDefaultAsync(i => i.ItineraryId == itineraryDTO.ItineraryId);
+            var checkId = await _dataContext.Itineraries.AsNoTracking().Include(c => c.Cars).Include(r => r.RouteCars).FirstOrDefaultAsync(i => i.ItineraryId == itineraryDTO.ItineraryId);
 
             var mappItinerary = _mapper.Map<Itinerary>(itineraryDTO);
 
             if (checkId == null)
             {
-                var car = await _dataContext.Cars.FirstOrDefaultAsync(c => c.CarsId == itineraryDTO.CarsId);
-                if (car == null) return "don't have this Car";
-                if (car.CategoryCar == 0) return "This car can't creacte itinerary";
-                var routecar = await _dataContext.RouteCars.FirstOrDefaultAsync(i => i.RouteCarsId == itineraryDTO.RouteCarsId);
-                if (routecar == null) return "don't have this route";
-
+                //var car = await _dataContext.Cars.FirstOrDefaultAsync(c => c.CarsId == itineraryDTO.CarsId);
+                //if (car == null) return "don't have this Car";
+                //if (car.CategoryCar == 0) return "This car can't creacte itinerary";
+                //var routecar = await _dataContext.RouteCars.FirstOrDefaultAsync(i => i.RouteCarsId == itineraryDTO.RouteCarsId);
+                //if (routecar == null) return "don't have this route";
+                mappItinerary.isUse = true;
                 await _dataContext.Itineraries.AddAsync(mappItinerary);
             }
             else
             {
+                mappItinerary.isUse = true;
                 _dataContext.Itineraries.Update(mappItinerary);
             }
             var result = await _dataContext.SaveChangesAsync();
@@ -42,10 +43,19 @@ namespace BookinKanAPI.ServicesManage.ItineraryServiceManage
             return null;
         }
 
-        public async Task DeleteItinerary(Itinerary itinerary)
+        public async Task<string> DeleteItinerary(Itinerary itinerary)
         {
+            bool check = await _dataContext.Bookings.AnyAsync(b => b.ItineraryId == itinerary.ItineraryId);
+
+            if (check)
+            {
+                return "มีคนใช้อยู่";
+            }
+
+            // Itinerary is not in use, proceed with deletion
             _dataContext.Itineraries.Remove(itinerary);
             await _dataContext.SaveChangesAsync();
+            return null;
         }
 
         public async Task<Itinerary> GetByIdAsync(int id)

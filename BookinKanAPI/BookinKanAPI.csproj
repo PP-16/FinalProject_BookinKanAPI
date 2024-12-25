@@ -29,6 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="DTOs\AuthenDto\NewFolder\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 

@@ -8,7 +8,7 @@ namespace BookinKanAPI.ServicesManage.ItineraryServiceManage
     {
         Task<List<Itinerary>> GetItineraries();
         Task<string> CreateItineraries(ItineraryDTO itineraryDTO);
-        Task DeleteItinerary(Itinerary itinerary);
+        Task<string> DeleteItinerary(Itinerary itinerary);
 
         Task<Itinerary> GetByIdAsync(int id);
         Task<List<Itinerary>> SearchItinerary(string Name);

@@ -84,7 +84,7 @@ namespace BookinKanAPI.ServicesManage.SystemSettingServiceManage
             }
             else
             {
-                _dataContext.SystemSettings.Update(mapSetting);
+          
                 //ตรวจสอบและจัดการกับไฟล์ที่ส่งเข้ามาใหม่
                 if (imageNames.Count > 0)
                 {
@@ -97,21 +97,33 @@ namespace BookinKanAPI.ServicesManage.SystemSettingServiceManage
                             ImageSlides = image
                         });
                     }
-                    //ลบไฟล์เดิม
-                    var oldImages = await _dataContext.ImageSlides.Where(p => p.SystemSettingId == mapSetting.SystemSettingId).ToListAsync();
-                    if (oldImages != null)
-                    {
-                        //ลบไฟล์ใน database
-                        _dataContext.ImageSlides.RemoveRange(oldImages);
-                        //ลบไฟล์ในโฟลเดอร์
-
-                        var files = oldImages.Select(p => p.ImageSlides).ToList();
-                        await _image.DeleteFileImages(files);
-
-                    }
-                    //ใส่ไฟล์เข้าไปใหม่
                     await _dataContext.ImageSlides.AddRangeAsync(images);
                 }
+
+                if (settingDTO.Logo != null)
+                {
+                    (errorMessage, imageNames) = await UploadImageAsync(settingDTO.Logo, "Logo");
+                    if (!string.IsNullOrEmpty(errorMessage)) return errorMessage;
+                    mapSetting.Logo = imageNames[0];
+                }
+                if (settingDTO.ImagePrompay != null)
+                {
+                    (errorMessage, imageNames) = await UploadImageAsync(settingDTO.ImagePrompay, "prompay");
+                    if (!string.IsNullOrEmpty(errorMessage)) return errorMessage;
+                    mapSetting.ImagePrompay = imageNames[0];
+                }
+
+                if(settingDTO.Logo == null)
+                {
+                    mapSetting.Logo = system.Logo;
+                }
+                if (settingDTO.ImagePrompay == null)
+                {
+                    mapSetting.ImagePrompay = system.ImagePrompay;
+                }
+
+                _dataContext.SystemSettings.Update(mapSetting);
+
             }
             var result = await _dataContext.SaveChangesAsync();
             if (result <= 0) return "error can't save news";
@@ -134,6 +146,34 @@ namespace BookinKanAPI.ServicesManage.SystemSettingServiceManage
                 }
             }
             return (errorMessege, ImgName);
+        }
+
+
+        public async Task<object> DeleteImageSlide(int imgId)
+        {
+            //ลบไฟล์เดิม
+            var oldImages = await _dataContext.ImageSlides.FirstOrDefaultAsync(p => p.ImageSlideId == imgId);
+            if (oldImages != null)
+            {
+                //ลบไฟล์ใน database
+                _dataContext.ImageSlides.Remove(oldImages);
+                //ลบไฟล์ในโฟลเดอร์
+
+                var files = oldImages.ImageSlides;
+
+                var fileImg = new List<string>
+                {
+                    files
+                };
+
+                await _image.DeleteFileImages(fileImg);
+
+            }
+
+            var result = await _dataContext.SaveChangesAsync();
+            if (result <= 0) return "Can't delete image";
+            return null!;
+
         }
 
         public async Task<string> DeleteSetting(int Id)
